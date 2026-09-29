@@ -323,6 +323,23 @@ const translations: Record<string, Record<Language, string>> = {
   passwords_match: { fr: 'Les mots de passe correspondent.', en: 'Passwords match.' },
   password_too_short: { fr: 'Le mot de passe doit contenir au moins 8 caractères.', en: 'Password must be at least 8 characters.' },
   password_changed: { fr: 'Mot de passe modifié avec succès !', en: 'Password changed successfully!' },
+
+  // Resources
+  resources: { fr: 'Ressources', en: 'Resources' },
+  'nav.resources': { fr: 'Ressources', en: 'Resources' },
+  resources_subtitle: { fr: 'Gérez et partagez les fichiers et documents par classe', en: 'Manage and share files and documents by class' },
+  new_section: { fr: 'Nouvelle section', en: 'New Section' },
+  section_name: { fr: 'Nom de la section', en: 'Section Name' },
+  section_suggestions: { fr: 'Suggestions :', en: 'Suggestions:' },
+  no_sections: { fr: 'Aucune section', en: 'No Sections Yet' },
+  no_files: { fr: 'Aucun fichier dans cette section', en: 'No files in this section' },
+  upload_files: { fr: 'Uploader des fichiers', en: 'Upload Files' },
+  click_to_upload: { fr: 'Cliquez pour uploader', en: 'Click to upload' },
+  drag_and_drop: { fr: 'ou glissez-déposez', en: 'or drag and drop' },
+  delete_section: { fr: 'Supprimer la section', en: 'Delete Section' },
+  delete_file: { fr: 'Supprimer le fichier', en: 'Delete File' },
+  download: { fr: 'Télécharger', en: 'Download' },
+  view: { fr: 'Voir', en: 'View' },
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
