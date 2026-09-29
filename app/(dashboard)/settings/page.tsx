@@ -7,6 +7,7 @@ import { settingsStorage, usersStorage, hashPassword } from '@/lib/storage';
 import { CenterSettings } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Card } from '@/components/ui/Card';
 import { ToastContainer, ToastMessage } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
@@ -293,8 +294,7 @@ export default function SettingsPage() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
                     {t('current_password') || 'Current Password'} *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={currentPassword}
                     onChange={e => setCurrentPassword(e.target.value)}
                     required
@@ -311,8 +311,7 @@ export default function SettingsPage() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
                     {t('new_password') || 'New Password'} *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     required
@@ -332,8 +331,7 @@ export default function SettingsPage() {
                   <label style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
                     {t('confirm_password') || 'Confirm New Password'} *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     required

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { registrationRequestsStorage } from '@/lib/storage';
 
 export default function RegisterPage() {
@@ -428,8 +429,7 @@ function RegisterContent() {
                   <label style={{ fontSize: '0.8rem', fontWeight: '500', color: 'var(--text-secondary)' }}>
                     {t('password') || 'Password'} *
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={formData.password}
                     onChange={(e) => updateField('password', e.target.value)}
                     required
