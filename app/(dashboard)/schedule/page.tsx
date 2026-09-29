@@ -427,6 +427,7 @@ export default function SchedulePage() {
             ))}
           </div>
         </div>
+      </div>
       )}
 
       {/* Class Details Modal */}
