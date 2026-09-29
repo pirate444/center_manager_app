@@ -1,0 +1,187 @@
+.scheduleGrid {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.headerRow {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  min-width: max-content;
+}
+
+.cornerHeader {
+  width: 100px;
+  flex-shrink: 0;
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  border-inline-end: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeHeadersContainer {
+  display: flex;
+  flex-grow: 1;
+}
+
+.timeHeaderBlock {
+  width: 100px;
+  /* matches PIXELS_PER_HOUR */
+  flex-shrink: 0;
+  padding: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+  border-inline-end: 1px solid var(--border-subtle);
+}
+
+.timeHeaderBlock:last-child {
+  border-inline-end: none;
+}
+
+.bodyContainer {
+  height: 600px;
+  overflow: auto;
+  position: relative;
+}
+
+.gridBody {
+  display: flex;
+  flex-direction: column;
+  min-width: max-content;
+}
+
+.dayRow {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 90px;
+  position: relative;
+}
+
+.dayRow:last-child {
+  border-bottom: none;
+}
+
+.todayRow {
+  background: rgba(6, 182, 212, 0.02);
+}
+
+.dayLabel {
+  width: 100px;
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  text-align: center;
+  border-inline-end: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.todayLabel {
+  color: var(--accent-teal);
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.dayRowContent {
+  position: relative;
+  display: flex;
+  flex-grow: 1;
+  min-height: 60px;
+}
+
+.gridLines {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.gridLineHour {
+  width: 100px;
+  /* matches PIXELS_PER_HOUR */
+  flex-shrink: 0;
+  border-inline-end: 1px solid var(--border-subtle);
+}
+
+/* Individual session tag: positioned absolutely on the timeline */
+.sessionTag {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 19px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
+  z-index: 5;
+}
+
+.sessionTag:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+.isDragging {
+  opacity: 0.5;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+  z-index: 15;
+}
+
+.tagSubject {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tagClass {
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+@media (max-width: 1024px) {
+  .scheduleGrid {
+    overflow-x: auto;
+  }
+}

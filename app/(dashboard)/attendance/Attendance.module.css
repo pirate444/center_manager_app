@@ -1,0 +1,120 @@
+.attendanceGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.studentList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.studentRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-md);
+  transition: all var(--transition-fast);
+}
+
+.studentRow:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.studentInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.studentName {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.studentId {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.statusGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.statusBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.statusBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.statusBtn.active.present {
+  background: var(--color-success);
+  color: white;
+  border-color: var(--color-success);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+.statusBtn.active.absent {
+  background: var(--color-error);
+  color: white;
+  border-color: var(--color-error);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.statusBtn.active.late {
+  background: var(--color-warning);
+  color: white;
+  border-color: var(--color-warning);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.statusBtn.active.excused {
+  background: var(--color-info);
+  color: white;
+  border-color: var(--color-info);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.bulkActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.saveBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 768px) {
+  .attendanceGrid {
+    grid-template-columns: 1fr;
+  }
+}

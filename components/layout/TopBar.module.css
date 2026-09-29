@@ -1,0 +1,168 @@
+.topbar {
+  height: 64px;
+  background-color: var(--bg-tertiary, #1e293b);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.menuBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary, #f8fafc);
+  cursor: pointer;
+  display: none;
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.menuBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.pageTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #f8fafc);
+  margin: 0;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.searchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary, #94a3b8);
+}
+html[dir="rtl"] .searchIcon {
+  right: 12px;
+  left: auto;
+}
+
+.searchInput {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 8px 16px 8px 36px;
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.875rem;
+  width: 200px;
+  transition: all 0.2s;
+  outline: none;
+}
+
+html[dir="rtl"] .searchInput {
+  padding: 8px 36px 8px 16px;
+}
+
+.searchInput:focus {
+  width: 240px;
+  border-color: var(--primary, #06b6d4);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.iconBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #f8fafc);
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+}
+html[dir="rtl"] .badge {
+  left: 6px;
+  right: auto;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 24px;
+  transition: all 0.2s;
+}
+
+.profileBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary, #06b6d4), var(--secondary, #6366f1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.userName {
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .menuBtn {
+    display: flex;
+  }
+  .searchContainer {
+    display: none;
+  }
+  .userName {
+    display: none;
+  }
+  .topbar {
+    padding: 0 16px;
+  }
+}

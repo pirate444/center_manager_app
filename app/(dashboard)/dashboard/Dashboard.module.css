@@ -1,0 +1,277 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  position: relative;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.statCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+}
+
+.statCard:nth-child(1)::before { background: linear-gradient(90deg, #06b6d4, #0ea5e9); }
+.statCard:nth-child(2)::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+.statCard:nth-child(3)::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.statCard:nth-child(4)::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+.statIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.statIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.statCard:nth-child(1) .statIcon { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+.statCard:nth-child(2) .statIcon { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+.statCard:nth-child(3) .statIcon { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.statCard:nth-child(4) .statIcon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionTitle svg {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-teal);
+}
+
+.scheduleCard {
+  padding: 1.5rem;
+}
+
+.scheduleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scheduleItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+
+.scheduleItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-default);
+}
+
+.scheduleColor {
+  width: 4px;
+  height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.scheduleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.scheduleName {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 0.125rem;
+}
+
+.scheduleMeta {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scheduleTime {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  white-space: nowrap;
+}
+
+.quickActions {
+  padding: 1.5rem;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: start;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.actionBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-glow);
+}
+
+.actionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.actionIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.actionBtn:nth-child(1) .actionIcon { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+.actionBtn:nth-child(2) .actionIcon { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+.actionBtn:nth-child(3) .actionIcon { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.actionBtn:nth-child(4) .actionIcon { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.recentCard {
+  padding: 1.5rem;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.recentItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.recentDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.recentText {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.recentText strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.recentTime {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+}
+
+.emptySchedule {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-tertiary);
+  font-size: 0.9375rem;
+}
+
+.welcomeHeader {
+  margin-bottom: 2rem;
+}
+
+.welcomeTitle {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.welcomeSubtitle {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+  .actionsGrid {
+    grid-template-columns: 1fr;
+  }
+}
