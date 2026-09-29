@@ -240,6 +240,23 @@ export default function SchedulePage() {
     setSelectedClass(updatedClass);
   };
 
+  const userSessions = filteredClasses.flatMap(cls => 
+    cls.schedule.map(slot => ({
+      classId: cls.id,
+      className: cls.name,
+      subject: cls.subject,
+      color: cls.color || '#06b6d4',
+      day: slot.day,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      room: cls.room
+    }))
+  ).sort((a, b) => {
+    const dayOrder = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+    if (dayOrder[a.day] !== dayOrder[b.day]) return dayOrder[a.day] - dayOrder[b.day];
+    return timeToMins(a.startTime) - timeToMins(b.startTime);
+  });
+
   return (
     <div className="page-container animate-fadeIn">
       <div style={{ marginBottom: '1.5rem' }}>
@@ -273,7 +290,31 @@ export default function SchedulePage() {
         )}
       </div>
 
-      <div className={styles.scheduleGrid}>
+      {!isManagerOrAdmin ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+          {userSessions.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+              {t('no_sessions_found') || 'No sessions scheduled for this week.'}
+            </div>
+          ) : (
+            userSessions.map((session, idx) => (
+              <div key={idx} className="glass-card" style={{ padding: '1rem', borderLeft: `4px solid ${session.color}`, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1.1rem' }}>{t(session.day)}</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '0.35rem 0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    {session.startTime} - {session.endTime}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: session.color }}>{session.subject}</div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{session.className} • {session.room}</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className={styles.scheduleGrid}>
         {/* Header Row */}
         <div className={styles.headerRow}>
           <div className={styles.cornerHeader}>{t('day')} / {t('time')}</div>
@@ -386,7 +427,7 @@ export default function SchedulePage() {
             ))}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Class Details Modal */}
       <Modal isOpen={!!selectedClass} onClose={() => setSelectedClass(null)} title={t('class_details')}>
