@@ -255,7 +255,7 @@ export default function AbsenceJournalPage() {
         </div>
       )}
 
-      {/* Journal Table */}
+      {/* Journal View */}
       {!activeClass ? (
         <Card>
           <div className={styles.emptyState}>
@@ -274,7 +274,138 @@ export default function AbsenceJournalPage() {
             <p>{t('no_students')}</p>
           </div>
         </Card>
+      ) : isStudent ? (
+        /* ===== STUDENT CALENDAR VIEW ===== */
+        <>
+          {enrolledStudents.map((student) => {
+            const dayMap = attendanceMap[student.id] || {};
+            const summary = studentSummaries[student.id] || { present: 0, absent: 0, late: 0, excused: 0 };
+            // Calculate the starting day of week for day 1 of the month (0=Sun, 6=Sat)
+            const firstDayOfWeek = new Date(selectedYear, selectedMonth, 1).getDay();
+            // Build calendar cells: blank padding + actual days
+            const calendarCells: (number | null)[] = [];
+            for (let i = 0; i < firstDayOfWeek; i++) calendarCells.push(null);
+            for (let d = 1; d <= daysInMonth; d++) calendarCells.push(d);
+
+            const getCalendarCellClass = (status: string | undefined) => {
+              switch (status) {
+                case 'present': return styles.calCellPresent;
+                case 'absent': return styles.calCellAbsent;
+                case 'late': return styles.calCellLate;
+                case 'excused': return styles.calCellExcused;
+                default: return styles.calCellNone;
+              }
+            };
+
+            const getStatusIcon = (status: string | undefined) => {
+              switch (status) {
+                case 'present': return '✓';
+                case 'absent': return '✗';
+                case 'late': return '⧖';
+                case 'excused': return 'E';
+                default: return '';
+              }
+            };
+
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === selectedYear && today.getMonth() === selectedMonth;
+
+            return (
+              <div key={student.id} className={styles.calendarWrapper}>
+                {/* Student summary stats row */}
+                <div className={styles.calendarStats}>
+                  <div className={`${styles.calendarStatItem} ${styles.calStatPresent}`}>
+                    <span className={styles.calStatIcon}>✓</span>
+                    <div className={styles.calStatContent}>
+                      <span className={styles.calStatValue}>{summary.present}</span>
+                      <span className={styles.calStatLabel}>{t('present')}</span>
+                    </div>
+                  </div>
+                  <div className={`${styles.calendarStatItem} ${styles.calStatAbsent}`}>
+                    <span className={styles.calStatIcon}>✗</span>
+                    <div className={styles.calStatContent}>
+                      <span className={styles.calStatValue}>{summary.absent}</span>
+                      <span className={styles.calStatLabel}>{t('absent')}</span>
+                    </div>
+                  </div>
+                  <div className={`${styles.calendarStatItem} ${styles.calStatLate}`}>
+                    <span className={styles.calStatIcon}>⧖</span>
+                    <div className={styles.calStatContent}>
+                      <span className={styles.calStatValue}>{summary.late}</span>
+                      <span className={styles.calStatLabel}>{t('late')}</span>
+                    </div>
+                  </div>
+                  <div className={`${styles.calendarStatItem} ${styles.calStatExcused}`}>
+                    <span className={styles.calStatIcon}>E</span>
+                    <div className={styles.calStatContent}>
+                      <span className={styles.calStatValue}>{summary.excused}</span>
+                      <span className={styles.calStatLabel}>{t('excused')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calendar grid */}
+                <div className={styles.calendarCard}>
+                  {/* Weekday headers */}
+                  <div className={styles.calendarGrid}>
+                    {['0','1','2','3','4','5','6'].map(dayKey => (
+                      <div key={dayKey} className={styles.calWeekdayHeader}>
+                        {SHORT_DAY_KEYS[dayKey]?.[language] || ''}
+                      </div>
+                    ))}
+
+                    {/* Calendar day cells */}
+                    {calendarCells.map((day, idx) => {
+                      if (day === null) {
+                        return <div key={`blank-${idx}`} className={styles.calCellBlank} />;
+                      }
+                      const status = dayMap[day];
+                      const isToday = isCurrentMonth && today.getDate() === day;
+                      return (
+                        <div
+                          key={day}
+                          className={`${styles.calCell} ${getCalendarCellClass(status)} ${isToday ? styles.calCellToday : ''}`}
+                          title={status ? t(status) : ''}
+                        >
+                          <span className={styles.calCellDay}>{day}</span>
+                          {status && (
+                            <span className={styles.calCellIcon}>{getStatusIcon(status)}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className={styles.calendarLegend}>
+                  <div className={styles.legendItem}>
+                    <span className={`${styles.legendDot} ${styles.present}`}></span>
+                    <span>{t('present')}</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={`${styles.legendDot} ${styles.absent}`}></span>
+                    <span>{t('absent')}</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={`${styles.legendDot} ${styles.late}`}></span>
+                    <span>{t('late')}</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={`${styles.legendDot} ${styles.excused}`}></span>
+                    <span>{t('excused')}</span>
+                  </div>
+                  <div className={styles.legendItem}>
+                    <span className={`${styles.legendDot} ${styles.none}`}></span>
+                    <span>{t('no_records_for_month')}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </>
       ) : (
+        /* ===== TABLE VIEW (Teachers / Managers / Admins) ===== */
         <div className={styles.tableWrapper}>
           <div className={styles.tableScroll}>
             <table className={styles.journalTable}>
