@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
@@ -19,6 +20,7 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
   const { t } = useTranslation();
   
   const { userRole, isSuperAdmin } = useAuth();
+  const { notifications } = useNotifications();
 
   const routes = [
     { path: '/dashboard', label: t('dashboard') || 'Dashboard', icon: <svg className={styles.icon} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>, roles: ['super_admin', 'center_manager'] },
@@ -63,6 +65,13 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
         <nav className={styles.nav}>
           {visibleRoutes.map((route) => {
             const isActive = pathname === route.path || (route.path !== '/' && pathname.startsWith(route.path));
+            
+            // Check if this route has a notification
+            let hasNotification = false;
+            if (route.path.includes('/messages') && notifications.messages) hasNotification = true;
+            if (route.path.includes('/resources') && notifications.resources) hasNotification = true;
+            if (route.path.includes('/schedule') && notifications.schedule) hasNotification = true;
+
             return (
               <Link
                 key={route.path}
@@ -71,7 +80,12 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
                 title={collapsed ? route.label : ''}
                 onClick={() => isMobileOpen && onMobileClose()}
               >
-                {route.icon}
+                <div style={{ position: 'relative', display: 'flex' }}>
+                  {route.icon}
+                  {hasNotification && (
+                    <span className={styles.notificationDot}></span>
+                  )}
+                </div>
                 {!collapsed && <span>{route.label}</span>}
               </Link>
             );

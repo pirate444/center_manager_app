@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { settingsStorage, usersStorage, hashPassword } from '@/lib/storage';
@@ -15,7 +16,8 @@ import styles from './Settings.module.css';
 
 export default function SettingsPage() {
   const { t, language, setLanguage } = useTranslation();
-  const { user, isTeacher, isManagerOrAdmin } = useAuth();
+  const { user, isTeacher, isManagerOrAdmin, logout } = useAuth();
+  const router = useRouter();
   
   const [activeTab, setActiveTab] = useState(() => 'language');
   const [settings, setSettings] = useState<CenterSettings | null>(null);
@@ -173,6 +175,14 @@ export default function SettingsPage() {
             {t('security') || 'Security'}
           </button>
           )}
+          <button 
+            className={`${styles.navItem} ${activeTab === 'account' ? styles.active : ''}`}
+            onClick={() => setActiveTab('account')}
+            style={activeTab === 'account' ? {} : {}}
+          >
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            {t('account') || 'Account'}
+          </button>
         </div>
 
         <div className="glass-card" style={{ padding: '2rem' }}>
@@ -370,6 +380,38 @@ export default function SettingsPage() {
               </form>
             </div>
           )}
+
+          {/* Account Tab — All Users */}
+          {activeTab === 'account' && (
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>{t('account') || 'Account'}</h2>
+                <p className={styles.sectionDesc}>
+                  {t('account_desc') || 'Manage your account settings and sign out.'}
+                </p>
+              </div>
+
+              <div className={styles.dataActions}>
+                <div className={styles.dataCard}>
+                  <div className={styles.dataCardInfo}>
+                    <h4>{t('logged_in_as') || 'Logged in as'}</h4>
+                    <p>{user?.firstName} {user?.lastName} — {user?.email || user?.role}</p>
+                  </div>
+                </div>
+
+                <div className={styles.dataCard} style={{ borderColor: 'var(--color-error-border, rgba(239,68,68,0.2))' }}>
+                  <div className={styles.dataCardInfo}>
+                    <h4 style={{ color: 'var(--color-error)' }}>{t('logout') || 'Logout'}</h4>
+                    <p>{t('logout_desc') || 'Sign out of your account on this device.'}</p>
+                  </div>
+                  <Button variant="danger" onClick={() => { logout(); router.push('/login'); }}>
+                    {t('logout') || 'Logout'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
 
         </div>
       </div>

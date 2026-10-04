@@ -146,3 +146,14 @@
     display: none;
   }
 }
+
+.notificationDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-error, #ef4444);
+  border-radius: 50%;
+  border: 2px solid var(--bg-tertiary, #1e293b);
+}

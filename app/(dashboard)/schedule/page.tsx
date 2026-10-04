@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { classesStorage, teachersStorage, settingsStorage } from '@/lib/storage';
 import { ClassItem, Teacher, DayOfWeek, CenterSettings } from '@/lib/types';
 import { Select } from '@/components/ui/Select';
@@ -33,6 +34,7 @@ function minsToTime(mins: number): string {
 export default function SchedulePage() {
   const { t } = useTranslation();
   const { user, isManagerOrAdmin, isTeacher, isStudent } = useAuth();
+  const { clearNotification } = useNotifications();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [settings, setSettings] = useState<CenterSettings | null>(null);
@@ -62,6 +64,7 @@ export default function SchedulePage() {
       setSettings(await settingsStorage.get());
     }
     loadData();
+    clearNotification('schedule');
   }, []);
 
   const todayDay = DAYS[new Date().getDay()];

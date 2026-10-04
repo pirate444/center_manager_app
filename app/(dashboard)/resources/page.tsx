@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ClassItem } from '@/lib/types';
 import styles from './page.module.css';
@@ -91,6 +92,7 @@ const SECTION_PRESETS_EN = ['Lessons', 'Exercises', 'Summary', 'Exams', 'Tutoria
 // ---- Component ----
 export default function ResourcesPage() {
   const { user, isStudent, isTeacher, isManagerOrAdmin } = useAuth();
+  const { clearNotification } = useNotifications();
   const { t, language } = useTranslation();
 
   // Data states
@@ -160,6 +162,7 @@ export default function ResourcesPage() {
       }
     }
     fetchClasses();
+    clearNotification('resources');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

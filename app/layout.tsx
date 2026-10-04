@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
 
 export const metadata: Metadata = {
   title: 'Education Center Platform',
@@ -19,8 +20,10 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <AuthProvider>
-            <div className="bg-gradient-mesh"></div>
-            {children}
+            <NotificationProvider>
+              <div className="bg-gradient-mesh"></div>
+              {children}
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>

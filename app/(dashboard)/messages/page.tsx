@@ -5,6 +5,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { messagesStorage, studentsStorage, classesStorage } from '@/lib/storage';
 import { Message, Student, ClassItem } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -15,6 +16,7 @@ import { Tabs, Tab } from '@/components/ui/Tabs';
 export default function MessagesPage() {
   const { t } = useTranslation();
   const { user, isManagerOrAdmin, isStudent } = useAuth();
+  const { clearNotification } = useNotifications();
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -46,6 +48,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     loadData();
+    clearNotification('messages');
     const handleUpdate = () => loadData();
     window.addEventListener('storage-update', handleUpdate);
     return () => window.removeEventListener('storage-update', handleUpdate);

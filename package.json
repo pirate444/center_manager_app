@@ -11,6 +11,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1142.0",
     "@aws-sdk/s3-request-presigner": "^3.1142.0",
+    "b2": "^0.1.11",
     "mongodb": "^7.6.0",
     "mongoose": "^9.10.1",
     "next": "^16.3.5",
