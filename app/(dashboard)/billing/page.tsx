@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { paymentsStorage, studentsStorage, classesStorage } from '@/lib/storage';
@@ -28,7 +28,15 @@ export default function BillingPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // --- Accordion state ---
+  const [expandedClasses, setExpandedClasses] = useState<string[]>([]);
   const [expandedStudents, setExpandedStudents] = useState<string[]>([]);
+
+  // --- Filters ---
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMonth, setFilterMonth] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   
   const [formData, setFormData] = useState({
     studentId: '',
@@ -153,24 +161,153 @@ export default function BillingPage() {
     return `${t(MONTH_KEYS[mIdx])} ${y}`;
   };
 
+  // Build unique months from existing payments for filter dropdown
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    payments.forEach(p => { if (p.month) monthSet.add(p.month); });
+    return Array.from(monthSet).sort().reverse();
+  }, [payments]);
+
+  // Build the class → students → payments grouped data
+  const groupedData = useMemo(() => {
+    const activeStudents = students.filter(s => s.status === 'active' && s.enrolledClassIds.length > 0);
+    const activeClasses = classes.filter(c => c.status === 'active');
+
+    // Build per-class data
+    return activeClasses.map(cls => {
+      const classStudents = activeStudents.filter(s => s.enrolledClassIds.includes(cls.id));
+      
+      const studentsWithPayments = classStudents.map(student => {
+        let studentPayments = payments
+          .filter(p => p.studentId === student.id && p.classId === cls.id)
+          .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+
+        // Apply month filter
+        if (filterMonth !== 'all') {
+          studentPayments = studentPayments.filter(p => p.month === filterMonth);
+        }
+
+        // Apply status filter
+        if (filterStatus !== 'all') {
+          studentPayments = studentPayments.filter(p => p.status === filterStatus);
+        }
+
+        return { student, payments: studentPayments };
+      });
+
+      // Apply search filter
+      const filteredStudents = studentsWithPayments.filter(({ student }) => {
+        if (!searchQuery) return true;
+        const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+        return fullName.includes(searchQuery.toLowerCase());
+      });
+
+      // If we're filtering by status or month, hide students with 0 matching payments
+      const visibleStudents = (filterMonth !== 'all' || filterStatus !== 'all')
+        ? filteredStudents.filter(s => s.payments.length > 0)
+        : filteredStudents;
+
+      return { cls, students: visibleStudents };
+    }).filter(group => group.students.length > 0); // hide empty classes
+  }, [students, classes, payments, searchQuery, filterMonth, filterStatus]);
+
+  const toggleClass = (classId: string) => {
+    setExpandedClasses(prev =>
+      prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId]
+    );
+  };
+
+  const toggleStudent = (key: string) => {
+    setExpandedStudents(prev =>
+      prev.includes(key) ? prev.filter(id => id !== key) : [...prev, key]
+    );
+  };
+
+  // Render for student self-view (keep existing compact style)
+  if (isStudent) {
+    return (
+      <div className="page-container animate-fadeIn">
+        <ToastContainer toasts={toasts} onClose={(id) => setToasts(toasts.filter(t => t.id !== id))} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <h1 className="page-title">{t('billing_overview')}</h1>
+        </div>
+        <div className={styles.studentsList}>
+          {students.filter(s => s.status === 'active' && s.enrolledClassIds.length > 0).map(student => (
+            <div key={student.id} className={styles.studentGroup}>
+              <div className={styles.studentHeader} style={{ cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div className={styles.studentAvatar}>
+                    {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+                  </div>
+                  <div className={styles.studentName}>
+                    {student.firstName} {student.lastName}
+                  </div>
+                </div>
+              </div>
+              <div className={styles.classList}>
+                {student.enrolledClassIds.map(classId => {
+                  const cls = classes.find(c => c.id === classId);
+                  if (!cls) return null;
+                  const classPayments = payments.filter(p => p.studentId === student.id && p.classId === classId).sort((a,b) => (b.month || '').localeCompare(a.month || ''));
+
+                  return (
+                    <div key={classId} className={styles.classItem}>
+                      <div className={styles.classHeader}>
+                        <div className={styles.className}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: cls.color || '#3b82f6' }}></div>
+                          {cls.name} <span className={styles.classSubject}>({cls.subject})</span>
+                        </div>
+                        <Link href={`/absence-journal?classId=${cls.id}&month=${currentMonthValue}`} className={styles.journalLink}>
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                          Absence Journal
+                        </Link>
+                      </div>
+
+                      {classPayments.length > 0 ? (
+                        <div className={styles.paymentGrid}>
+                          {classPayments.map(p => (
+                            <div key={p.id} className={styles.paymentMonthCard}>
+                              <div className={styles.paymentMonthName}>{formatMonth(p.month) || 'Unknown Month'}</div>
+                              <div className={styles.paymentAmount}>{p.amount} {t('dinar')}</div>
+                              <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
+                                {t(p.status)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={styles.noPayments}>
+                          No payments recorded for this class.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Main admin/manager view — class → students accordion
   return (
     <div className="page-container animate-fadeIn">
       <ToastContainer toasts={toasts} onClose={(id) => setToasts(toasts.filter(t => t.id !== id))} />
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 className="page-title">{t('billing_overview')}</h1>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <h1 className="page-title">{t('billing_overview')}</h1>
         {isManagerOrAdmin && (
           <Button onClick={() => setIsModalOpen(true)}>{t('record_payment')}</Button>
         )}
       </div>
 
-      {!isStudent && (
+      {/* Summary Cards */}
       <div className={styles.overviewGrid}>
         <div className={`${styles.overviewCard} ${styles.cardCollected}`}>
           <div className={styles.cardLabel}>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {t('total_collected')}
           </div>
           <div className={`${styles.cardValue} ${styles.success}`}>
@@ -180,7 +317,7 @@ export default function BillingPage() {
 
         <div className={`${styles.overviewCard} ${styles.cardPending}`}>
           <div className={styles.cardLabel}>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {t('total_pending')}
           </div>
           <div className={`${styles.cardValue} ${styles.warning}`}>
@@ -190,7 +327,7 @@ export default function BillingPage() {
 
         <div className={`${styles.overviewCard} ${styles.cardOverdue}`}>
           <div className={styles.cardLabel}>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             {t('total_overdue')}
           </div>
           <div className={`${styles.cardValue} ${styles.error}`}>
@@ -198,79 +335,152 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
-      )}
 
-      <div className={styles.studentsList}>
-        {students.filter(s => s.status === 'active' && s.enrolledClassIds.length > 0).map(student => {
-          const isExpanded = isStudent || expandedStudents.includes(student.id);
-          return (
-          <div key={student.id} className={styles.studentGroup}>
-            <div 
-              className={styles.studentHeader}
-              onClick={() => !isStudent && setExpandedStudents(prev => prev.includes(student.id) ? prev.filter(id => id !== student.id) : [...prev, student.id])}
-              style={{ cursor: isStudent ? 'default' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div className={styles.studentAvatar}>
-                  {student.firstName.charAt(0)}{student.lastName.charAt(0)}
-                </div>
-                <div className={styles.studentName}>
-                  {student.firstName} {student.lastName}
-                </div>
-              </div>
-              {!isStudent && (
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'var(--text-secondary)' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              )}
-            </div>
-            
-            {isExpanded && (
-            <div className={styles.classList}>
-              {student.enrolledClassIds.map(classId => {
-                const cls = classes.find(c => c.id === classId);
-                if (!cls) return null;
-                const classPayments = payments.filter(p => p.studentId === student.id && p.classId === classId).sort((a,b) => (b.month || '').localeCompare(a.month || ''));
-
-                return (
-                  <div key={classId} className={styles.classItem}>
-                    <div className={styles.classHeader}>
-                      <div className={styles.className}>
-                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: cls.color || '#3b82f6' }}></div>
-                        {cls.name} <span className={styles.classSubject}>({cls.subject})</span>
-                      </div>
-                      <Link href={`/absence-journal?classId=${cls.id}&month=${currentMonthValue}`} className={styles.journalLink}>
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        Absence Journal
-                      </Link>
-                    </div>
-
-                    {classPayments.length > 0 ? (
-                      <div className={styles.paymentGrid}>
-                        {classPayments.map(p => (
-                          <div key={p.id} className={styles.paymentMonthCard}>
-                            <div className={styles.paymentMonthName}>{formatMonth(p.month) || 'Unknown Month'}</div>
-                            <div className={styles.paymentAmount}>{p.amount} {t('dinar')}</div>
-                            <span className={`${styles.paymentStatus} badge-${p.status === 'paid' ? 'success' : p.status === 'overdue' ? 'error' : 'warning'}`} style={{ color: '#fff', fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '12px' }}>
-                              {t(p.status)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ color: 'var(--text-tertiary)', fontSize: '0.875rem', padding: '0.5rem 0' }}>
-                        No payments recorded for this class.
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            )}
+      {/* Filters Toolbar */}
+      <div className={styles.filtersToolbar}>
+        <div className={styles.searchInputWrapper}>
+          <div className={styles.searchIcon}>
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
-        )})}
+          <input
+            type="text"
+            className={styles.searchInput}
+            placeholder={t('search_students') || 'Search students...'}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <select
+          className={styles.filterSelect}
+          value={filterMonth}
+          onChange={e => setFilterMonth(e.target.value)}
+        >
+          <option value="all">{t('all_months') || 'All months'}</option>
+          {availableMonths.map(m => (
+            <option key={m} value={m}>{formatMonth(m)}</option>
+          ))}
+        </select>
+
+        <select
+          className={styles.filterSelect}
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+        >
+          <option value="all">{t('all_statuses') || 'All statuses'}</option>
+          <option value="paid">{t('paid') || 'Paid'}</option>
+          <option value="pending">{t('pending') || 'Pending'}</option>
+          <option value="overdue">{t('overdue') || 'Overdue'}</option>
+        </select>
       </div>
 
+      {/* Class → Students Accordion */}
+      {groupedData.length > 0 ? (
+        groupedData.map(({ cls, students: classStudents }) => {
+          const isClassOpen = expandedClasses.includes(cls.id);
+          return (
+            <div key={cls.id} className={styles.classAccordion}>
+              <div className={styles.classAccordionHeader} onClick={() => toggleClass(cls.id)}>
+                <div className={styles.classAccordionLeft}>
+                  <div className={styles.classColorDot} style={{ backgroundColor: cls.color || '#3b82f6' }} />
+                  <span className={styles.classAccordionName}>
+                    {cls.name}
+                    <span className={styles.classAccordionSubject}> ({cls.subject})</span>
+                  </span>
+                </div>
+                <div className={styles.classAccordionRight}>
+                  <span className={styles.classStudentCount}>
+                    {classStudents.length} {classStudents.length === 1 ? (t('student') || 'student') : (t('students') || 'students')}
+                  </span>
+                  <Link
+                    href={`/absence-journal?classId=${cls.id}&month=${currentMonthValue}`}
+                    className={styles.journalLink}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Absence Journal
+                  </Link>
+                  <div className={`${styles.classChevron} ${isClassOpen ? styles.classChevronOpen : ''}`}>
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {isClassOpen && (
+                <div className={styles.classAccordionBody}>
+                  {classStudents.map(({ student, payments: studentPayments }) => {
+                    const studentKey = `${cls.id}-${student.id}`;
+                    const isStudentOpen = expandedStudents.includes(studentKey);
+
+                    return (
+                      <div key={studentKey} className={styles.studentRow}>
+                        <div className={styles.studentRowHeader} onClick={() => toggleStudent(studentKey)}>
+                          <div className={styles.studentRowLeft}>
+                            <div className={styles.studentAvatar}>
+                              {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+                            </div>
+                            <span className={styles.studentName}>
+                              {student.firstName} {student.lastName}
+                            </span>
+                          </div>
+                          <div className={styles.studentRowRight}>
+                            {/* Status dot summary */}
+                            <div className={styles.studentStatusSummary}>
+                              {studentPayments.some(p => p.status === 'paid') && <div className={`${styles.statusDot} ${styles.statusDotPaid}`} title={t('paid')} />}
+                              {studentPayments.some(p => p.status === 'pending') && <div className={`${styles.statusDot} ${styles.statusDotPending}`} title={t('pending')} />}
+                              {studentPayments.some(p => p.status === 'overdue') && <div className={`${styles.statusDot} ${styles.statusDotOverdue}`} title={t('overdue')} />}
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                              {studentPayments.length} {studentPayments.length === 1 ? 'payment' : 'payments'}
+                            </span>
+                            <div className={`${styles.studentChevron} ${isStudentOpen ? styles.studentChevronOpen : ''}`}>
+                              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+
+                        {isStudentOpen && (
+                          <div className={styles.paymentsContainer}>
+                            {studentPayments.length > 0 ? (
+                              studentPayments.map(p => (
+                                <div key={p.id} className={styles.paymentRow}>
+                                  <div className={styles.paymentRowLeft}>
+                                    <span className={styles.paymentMonth}>{formatMonth(p.month) || 'Unknown'}</span>
+                                    <span className={styles.paymentAmount}>{p.amount} {t('dinar')}</span>
+                                  </div>
+                                  <div className={styles.paymentRowRight}>
+                                    <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
+                                      {t(p.status)}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className={styles.noPayments}>No payments recorded.</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })
+      ) : (
+        <div className={styles.noResults}>
+          {searchQuery || filterMonth !== 'all' || filterStatus !== 'all'
+            ? (t('no_results_found') || 'No results found for your filters.')
+            : (t('no_billing_data') || 'No billing data available.')}
+        </div>
+      )}
+
+      {/* Record Payment Modal */}
       {isManagerOrAdmin && (
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('record_payment')}>
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
