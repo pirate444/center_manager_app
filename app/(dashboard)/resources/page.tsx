@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -92,8 +92,11 @@ const SECTION_PRESETS_EN = ['Lessons', 'Exercises', 'Summary', 'Exams', 'Tutoria
 // ---- Component ----
 export default function ResourcesPage() {
   const { user, isStudent, isTeacher, isManagerOrAdmin } = useAuth();
-  const { clearNotification } = useNotifications();
+  const { clearNotification, getSeenTimestamp } = useNotifications();
   const { t, language } = useTranslation();
+
+  // Capture the last-seen time BEFORE clearing — used to highlight new files
+  const lastSeenRef = useRef<number>(0);
 
   // Data states
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -162,6 +165,7 @@ export default function ResourcesPage() {
       }
     }
     fetchClasses();
+    lastSeenRef.current = getSeenTimestamp('resources');
     clearNotification('resources');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -662,7 +666,17 @@ export default function ResourcesPage() {
                         </svg>
                       </div>
                       <div>
-                        <div className={styles.sectionName}>{section.name}</div>
+                        <div className={styles.sectionName}>
+                          {section.name}
+                          {(() => {
+                            const newCount = section.files.filter(f => new Date(f.uploadedAt).getTime() > lastSeenRef.current).length;
+                            return newCount > 0 ? (
+                              <span className={styles.newCountBadge}>
+                                {newCount} {language === 'fr' ? 'nouveau(x)' : 'new'}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
                         <div className={styles.sectionMeta}>
                           {section.files.length}{' '}
                           {language === 'fr'
@@ -717,15 +731,20 @@ export default function ResourcesPage() {
                       {/* Files List */}
                       {section.files.length > 0 ? (
                         <div className={styles.filesList}>
-                          {section.files.map((file) => (
-                            <div key={file._id} className={styles.fileRow}>
+                          {section.files.map((file) => {
+                            const isNew = new Date(file.uploadedAt).getTime() > lastSeenRef.current;
+                            return (
+                            <div key={file._id} className={`${styles.fileRow} ${isNew ? styles.fileRowNew : ''}`}>
                               <div
                                 className={`${styles.fileIconWrapper} ${getFileIconClass(file.mimeType, file.fileName)}`}
                               >
                                 {getFileIconLabel(file.mimeType, file.fileName)}
                               </div>
                               <div className={styles.fileInfo}>
-                                <div className={styles.fileName}>{file.fileName}</div>
+                                <div className={styles.fileName}>
+                                  {file.fileName}
+                                  {isNew && <span className={styles.newBadge}>{language === 'fr' ? 'NOUVEAU' : 'NEW'}</span>}
+                                </div>
                                 <div className={styles.fileMeta}>
                                   <span>{formatFileSize(file.fileSize)}</span>
                                   <span>{formatDate(file.uploadedAt)}</span>
@@ -790,7 +809,8 @@ export default function ResourcesPage() {
                                 )}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className={styles.noFiles}>

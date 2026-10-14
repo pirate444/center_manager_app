@@ -12,6 +12,7 @@ interface NotificationState {
 interface NotificationContextType {
   notifications: NotificationState;
   clearNotification: (key: keyof NotificationState) => void;
+  getSeenTimestamp: (key: keyof NotificationState) => number;
   hasAnyNotification: boolean;
 }
 
@@ -141,10 +142,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     saveSeenTimestamp(key);
   }, [saveSeenTimestamp]);
 
+  const getSeenTimestamp = useCallback((key: keyof NotificationState): number => {
+    const seen = getSeenTimestamps();
+    return seen[`${user?.id || 'anon'}_${key}`] || 0;
+  }, [user, getSeenTimestamps]);
+
   const hasAnyNotification = notifications.messages || notifications.resources || notifications.schedule;
 
   return (
-    <NotificationContext.Provider value={{ notifications, clearNotification, hasAnyNotification }}>
+    <NotificationContext.Provider value={{ notifications, clearNotification, getSeenTimestamp, hasAnyNotification }}>
       {children}
     </NotificationContext.Provider>
   );
