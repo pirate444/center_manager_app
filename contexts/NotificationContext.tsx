@@ -75,14 +75,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         setNotifications(prev => ({ ...prev, messages: hasNewMsg }));
       }
 
-      // Check resources  
-      const resRes = await fetch('/api/resources');
+      // Check resources (new sections or newly uploaded files)
+      const resRes = await fetch('/api/resources?latest=true');
       if (resRes.ok) {
         const resources = await resRes.json();
         const lastSeenRes = seen[`${userId}_resources`] || 0;
         const hasNewRes = resources.some((r: any) => {
-          const createdTime = new Date(r.createdAt || r.updatedAt).getTime();
-          return createdTime > lastSeenRes;
+          // updatedAt covers both new sections and new file uploads
+          const updatedTime = new Date(r.updatedAt).getTime();
+          return updatedTime > lastSeenRes;
         });
         setNotifications(prev => ({ ...prev, resources: hasNewRes }));
       }

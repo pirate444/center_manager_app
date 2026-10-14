@@ -221,6 +221,7 @@ export default function ResourcesPage() {
       setNewSectionName('');
       setShowCreateModal(false);
       fetchSections();
+      window.dispatchEvent(new CustomEvent('storage-update', { detail: { endpoint: '/api/resources' } }));
     } catch {
       alert('Failed to create section');
     } finally {
@@ -379,6 +380,7 @@ export default function ResourcesPage() {
 
     // Refresh sections
     fetchSections();
+    window.dispatchEvent(new CustomEvent('storage-update', { detail: { endpoint: '/api/resources' } }));
 
     // Clear completed uploads after a delay
     setTimeout(() => {

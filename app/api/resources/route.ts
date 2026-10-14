@@ -4,13 +4,23 @@ import ResourceSection from '@/models/ResourceSection';
 import { toPlain, toPlainArray } from '@/lib/api-helpers';
 
 // GET /api/resources?classId=xxx — get all sections for a class
+// GET /api/resources?latest=true  — get recently updated sections (for notifications)
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const classId = searchParams.get('classId');
+    const latest = searchParams.get('latest');
 
+    // If no classId, return recently updated sections (for notification checks)
     if (!classId) {
+      if (latest === 'true') {
+        const docs = await ResourceSection.find({})
+          .sort({ updatedAt: -1 })
+          .limit(50)
+          .lean();
+        return NextResponse.json(toPlainArray(docs));
+      }
       return NextResponse.json({ error: 'classId is required' }, { status: 400 });
     }
 
