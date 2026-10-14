@@ -103,18 +103,23 @@ html[dir="rtl"] .searchInput {
   color: var(--text-primary, #f8fafc);
 }
 
-.badge {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  background-color: #ef4444;
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: var(--error, #ef4444);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
   border-radius: 50%;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
-html[dir="rtl"] .badge {
-  left: 6px;
-  right: auto;
+
+.logoutBtn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
 }
 
 .profileBtn {
@@ -162,7 +167,13 @@ html[dir="rtl"] .badge {
   .userName {
     display: none;
   }
+  .profileBtn {
+    padding: 4px;
+  }
   .topbar {
-    padding: 0 16px;
+    padding: 0 12px;
+  }
+  .rightSection {
+    gap: 8px;
   }
 }
