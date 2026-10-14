@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         const docs = await ResourceSection.find({})
           .sort({ updatedAt: -1 })
           .limit(50)
-          .lean();
+          .select('classId name updatedAt createdAt');
         return NextResponse.json(toPlainArray(docs));
       }
       return NextResponse.json({ error: 'classId is required' }, { status: 400 });
