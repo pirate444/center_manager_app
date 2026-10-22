@@ -12,6 +12,7 @@ export interface IPayment extends Document {
   method?: 'cash' | 'bank_transfer' | 'check' | 'online';
   description: string;
   receiptNumber?: string;
+  collectedByTeacher: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +37,7 @@ const PaymentSchema = new Schema<IPayment>(
     },
     description: { type: String, default: '' },
     receiptNumber: { type: String },
+    collectedByTeacher: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

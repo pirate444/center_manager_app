@@ -310,6 +310,35 @@
   transform: rotate(180deg);
 }
 
+/* ===== Sessions Badge ===== */
+.sessionsBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--accent-teal);
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.sessionsInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  padding: 0.1rem 0.4rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
 /* ===== Payment Rows (inside student) ===== */
 .paymentsContainer {
   padding: 0.25rem 1rem 0.5rem 2.75rem;
@@ -329,6 +358,8 @@
   border: 1px solid var(--border-color);
   font-size: 0.8rem;
   transition: background 0.15s;
+  flex-wrap: wrap;
+  gap: 0.2rem;
 }
 
 .paymentRow:hover {
@@ -371,6 +402,145 @@
 .badgePaid { background: var(--color-success); }
 .badgePending { background: var(--color-warning); }
 .badgeOverdue { background: var(--color-error); }
+
+/* ===== Collected Badge ===== */
+.collectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.collectedBadge:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+.collectedYes {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.collectedNo {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* ===== Edit Button ===== */
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.editBtn:hover {
+  background: var(--accent-teal);
+  color: #fff;
+  border-color: var(--accent-teal);
+  transform: scale(1.1);
+}
+
+/* ===== Payment Description Row ===== */
+.paymentDescRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+  margin-top: 0.15rem;
+  border-top: 1px dashed rgba(128, 128, 128, 0.15);
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.paymentDescRow svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* ===== Payment description (student view) ===== */
+.paymentDescription {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin-top: 0.15rem;
+  padding-top: 0.2rem;
+  border-top: 1px dashed rgba(128, 128, 128, 0.15);
+}
+
+/* ===== Edit Context (read-only context in edit modal) ===== */
+.editContext {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+  border-radius: var(--border-radius-md);
+}
+
+.editContextItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.editContextLabel {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.editContextValue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ===== Checkbox Row ===== */
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  transition: background 0.15s;
+}
+
+.checkboxRow:hover {
+  background: rgba(6, 182, 212, 0.05);
+}
+
+.checkboxRow input[type="checkbox"] {
+  accent-color: var(--accent-teal);
+  width: 16px;
+  height: 16px;
+}
 
 .journalLink {
   font-size: 0.75rem;
@@ -509,5 +679,22 @@
   .paymentRowRight {
     width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .editContext {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .studentRowHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .studentRowRight {
+    padding-left: 2.5rem;
+    flex-wrap: wrap;
   }
 }

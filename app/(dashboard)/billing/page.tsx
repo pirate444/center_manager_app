@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { paymentsStorage, studentsStorage, classesStorage } from '@/lib/storage';
-import { Payment, Student, ClassItem } from '@/lib/types';
+import { paymentsStorage, studentsStorage, classesStorage, attendanceStorage } from '@/lib/storage';
+import { Payment, Student, ClassItem, AttendanceRecord } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
@@ -19,15 +19,47 @@ const MONTH_KEYS = [
   'month_september', 'month_october', 'month_november', 'month_december',
 ];
 
+const DAY_MAP: Record<string, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
+/** Count how many sessions a class has in a given YYYY-MM month based on its weekly schedule */
+function countSessionsInMonth(schedule: { day: string }[], yearMonth: string): number {
+  if (!yearMonth || !schedule || schedule.length === 0) return 0;
+  const [y, m] = yearMonth.split('-').map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  let count = 0;
+  const scheduleDays = schedule.map(s => DAY_MAP[s.day.toLowerCase()]).filter(d => d !== undefined);
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dow = new Date(y, m - 1, day).getDay();
+    if (scheduleDays.includes(dow)) count++;
+  }
+  return count;
+}
+
 export default function BillingPage() {
   const { t } = useTranslation();
   const { user, isStudent, isManagerOrAdmin } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // --- Edit Modal state ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    amount: '',
+    description: '',
+    dueDate: '',
+    status: 'paid',
+    method: 'cash',
+    collectedByTeacher: false,
+  });
 
   // --- Accordion state ---
   const [expandedClasses, setExpandedClasses] = useState<string[]>([]);
@@ -46,6 +78,7 @@ export default function BillingPage() {
     dueDate: new Date().toISOString().split('T')[0],
     status: 'paid',
     method: 'cash',
+    collectedByTeacher: false,
     months: [] as string[]
   });
 
@@ -61,6 +94,7 @@ export default function BillingPage() {
     setPayments(allPayments);
     setStudents(allStudents);
     setClasses(await classesStorage.getAll());
+    setAttendanceRecords(await attendanceStorage.getAll());
   };
 
   useEffect(() => {
@@ -102,6 +136,7 @@ export default function BillingPage() {
         status: formData.status as any,
         method: formData.status === 'paid' ? formData.method as any : undefined,
         description: formData.description || `${month} Payment`,
+        collectedByTeacher: formData.collectedByTeacher,
       } as any);
     });
 
@@ -118,9 +153,58 @@ export default function BillingPage() {
       dueDate: new Date().toISOString().split('T')[0],
       status: 'paid',
       method: 'cash',
+      collectedByTeacher: false,
       months: []
     });
   };
+
+  // --- Edit Payment ---
+  const openEditModal = (payment: Payment) => {
+    setEditingPayment(payment);
+    setEditFormData({
+      amount: String(payment.amount),
+      description: payment.description || '',
+      dueDate: payment.dueDate || '',
+      status: payment.status,
+      method: payment.method || 'cash',
+      collectedByTeacher: payment.collectedByTeacher || false,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPayment) return;
+
+    await paymentsStorage.update(editingPayment.id, {
+      amount: Number(editFormData.amount),
+      description: editFormData.description,
+      dueDate: editFormData.dueDate,
+      status: editFormData.status as any,
+      method: editFormData.status === 'paid' ? editFormData.method as any : undefined,
+      paidDate: editFormData.status === 'paid' ? (editingPayment.paidDate || new Date().toISOString()) : undefined,
+      collectedByTeacher: editFormData.collectedByTeacher,
+    });
+
+    showToast(t('payment_updated') || 'Payment updated successfully', 'success');
+    setIsEditModalOpen(false);
+    setEditingPayment(null);
+    loadData();
+  };
+
+  // --- Toggle collected status inline ---
+  const toggleCollected = useCallback(async (payment: Payment) => {
+    await paymentsStorage.update(payment.id, {
+      collectedByTeacher: !payment.collectedByTeacher,
+    });
+    loadData();
+    showToast(
+      !payment.collectedByTeacher
+        ? (t('marked_collected') || 'Marked as collected')
+        : (t('marked_not_collected') || 'Marked as not collected'),
+      'info'
+    );
+  }, []);
 
   // Calculate totals
   const totalCollected = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
@@ -167,6 +251,22 @@ export default function BillingPage() {
     payments.forEach(p => { if (p.month) monthSet.add(p.month); });
     return Array.from(monthSet).sort().reverse();
   }, [payments]);
+
+  // Compute attended sessions per student per class per month from attendance records
+  const attendedSessionsMap = useMemo(() => {
+    const map: Record<string, number> = {}; // key: `${studentId}-${classId}-${YYYY-MM}`
+    attendanceRecords.forEach(record => {
+      if (!record.date || !record.classId) return;
+      const month = record.date.substring(0, 7); // YYYY-MM
+      record.entries.forEach(entry => {
+        if (entry.status === 'present' || entry.status === 'late') {
+          const key = `${entry.studentId}-${record.classId}-${month}`;
+          map[key] = (map[key] || 0) + 1;
+        }
+      });
+    });
+    return map;
+  }, [attendanceRecords]);
 
   // Build the class → students → payments grouped data
   const groupedData = useMemo(() => {
@@ -269,9 +369,16 @@ export default function BillingPage() {
                             <div key={p.id} className={styles.paymentMonthCard}>
                               <div className={styles.paymentMonthName}>{formatMonth(p.month) || 'Unknown Month'}</div>
                               <div className={styles.paymentAmount}>{p.amount} {t('dinar')}</div>
-                              <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
-                                {t(p.status)}
-                              </span>
+                              <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                                <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
+                                  {t(p.status)}
+                                </span>
+                              </div>
+                              {p.description && (
+                                <div className={styles.paymentDescription}>
+                                  {p.description}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -414,6 +521,10 @@ export default function BillingPage() {
                     const studentKey = `${cls.id}-${student.id}`;
                     const isStudentOpen = expandedStudents.includes(studentKey);
 
+                    // Calculate total sessions for this student in this class
+                    const uniqueMonths = [...new Set(studentPayments.map(p => p.month).filter(Boolean))] as string[];
+                    const totalSessions = uniqueMonths.reduce((sum, month) => sum + countSessionsInMonth(cls.schedule, month), 0);
+
                     return (
                       <div key={studentKey} className={styles.studentRow}>
                         <div className={styles.studentRowHeader} onClick={() => toggleStudent(studentKey)}>
@@ -432,6 +543,10 @@ export default function BillingPage() {
                               {studentPayments.some(p => p.status === 'pending') && <div className={`${styles.statusDot} ${styles.statusDotPending}`} title={t('pending')} />}
                               {studentPayments.some(p => p.status === 'overdue') && <div className={`${styles.statusDot} ${styles.statusDotOverdue}`} title={t('overdue')} />}
                             </div>
+                            <span className={styles.sessionsBadge} title={t('total_sessions') || 'Total sessions'}>
+                              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              {totalSessions} {t('sessions') || 'sessions'}
+                            </span>
                             <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
                               {studentPayments.length} {studentPayments.length === 1 ? 'payment' : 'payments'}
                             </span>
@@ -446,19 +561,69 @@ export default function BillingPage() {
                         {isStudentOpen && (
                           <div className={styles.paymentsContainer}>
                             {studentPayments.length > 0 ? (
-                              studentPayments.map(p => (
-                                <div key={p.id} className={styles.paymentRow}>
-                                  <div className={styles.paymentRowLeft}>
-                                    <span className={styles.paymentMonth}>{formatMonth(p.month) || 'Unknown'}</span>
-                                    <span className={styles.paymentAmount}>{p.amount} {t('dinar')}</span>
+                              studentPayments.map(p => {
+                                const sessionsThisMonth = countSessionsInMonth(cls.schedule, p.month || '');
+                                const attendedKey = `${student.id}-${cls.id}-${p.month}`;
+                                const attendedSessions = attendedSessionsMap[attendedKey] || 0;
+                                return (
+                                  <div key={p.id} className={styles.paymentRow}>
+                                    <div className={styles.paymentRowLeft}>
+                                      <span className={styles.paymentMonth}>{formatMonth(p.month) || 'Unknown'}</span>
+                                      <span className={styles.paymentAmount}>{p.amount} {t('dinar')}</span>
+                                      {/* Sessions info for this month */}
+                                      <span className={styles.sessionsInfo} title={`${attendedSessions} attended / ${sessionsThisMonth} total sessions`}>
+                                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        {attendedSessions}/{sessionsThisMonth}
+                                      </span>
+                                    </div>
+                                    <div className={styles.paymentRowRight}>
+                                      {/* Payment status badge */}
+                                      <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
+                                        {t(p.status)}
+                                      </span>
+                                      {/* Collected by teacher badge */}
+                                      {p.status === 'paid' && (
+                                        <span
+                                          className={`${styles.collectedBadge} ${p.collectedByTeacher ? styles.collectedYes : styles.collectedNo}`}
+                                          onClick={(e) => { e.stopPropagation(); toggleCollected(p); }}
+                                          title={p.collectedByTeacher ? (t('collected') || 'Collected') : (t('not_collected') || 'Not collected — click to toggle')}
+                                        >
+                                          {p.collectedByTeacher ? (
+                                            <>
+                                              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                              {t('collected') || 'Collected'}
+                                            </>
+                                          ) : (
+                                            <>
+                                              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01" /></svg>
+                                              {t('not_collected') || 'Not Collected'}
+                                            </>
+                                          )}
+                                        </span>
+                                      )}
+                                      {/* Edit button */}
+                                      {isManagerOrAdmin && (
+                                        <button
+                                          className={styles.editBtn}
+                                          onClick={(e) => { e.stopPropagation(); openEditModal(p); }}
+                                          title={t('edit_payment') || 'Edit payment'}
+                                        >
+                                          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                          </svg>
+                                        </button>
+                                      )}
+                                    </div>
+                                    {/* Description row */}
+                                    {p.description && (
+                                      <div className={styles.paymentDescRow}>
+                                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
+                                        <span>{p.description}</span>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className={styles.paymentRowRight}>
-                                    <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
-                                      {t(p.status)}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))
+                                );
+                              })
                             ) : (
                               <div className={styles.noPayments}>No payments recorded.</div>
                             )}
@@ -572,9 +737,112 @@ export default function BillingPage() {
               )}
             </div>
 
+            {/* Collected by teacher toggle */}
+            {formData.status === 'paid' && (
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={formData.collectedByTeacher}
+                  onChange={(e) => setFormData({ ...formData, collectedByTeacher: e.target.checked })}
+                />
+                <span>{t('collected_by_teacher') || 'I have collected my payment share'}</span>
+              </label>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
               <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
               <Button type="submit" disabled={formData.months.length === 0 || !formData.classId}>{t('save')}</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Payment Modal */}
+      {isManagerOrAdmin && editingPayment && (
+        <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setEditingPayment(null); }} title={t('edit_payment') || 'Edit Payment'}>
+          <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            {/* Show student & month as read-only context */}
+            <div className={styles.editContext}>
+              <div className={styles.editContextItem}>
+                <span className={styles.editContextLabel}>{t('student') || 'Student'}</span>
+                <span className={styles.editContextValue}>
+                  {(() => { const s = students.find(s => s.id === editingPayment.studentId); return s ? `${s.firstName} ${s.lastName}` : editingPayment.studentId; })()}
+                </span>
+              </div>
+              <div className={styles.editContextItem}>
+                <span className={styles.editContextLabel}>{t('month') || 'Month'}</span>
+                <span className={styles.editContextValue}>{formatMonth(editingPayment.month)}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Input
+                type="number"
+                label={`${t('amount')} (${t('dinar')})`}
+                value={editFormData.amount}
+                onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                min={0}
+                required
+              />
+              <Input
+                type="date"
+                label={t('due_date')}
+                value={editFormData.dueDate}
+                onChange={(e) => setEditFormData({ ...editFormData, dueDate: e.target.value })}
+                required
+              />
+            </div>
+
+            <Input
+              label={t('description')}
+              value={editFormData.description}
+              onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+              placeholder="Payment description"
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Select
+                label={t('status')}
+                value={editFormData.status}
+                onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                options={[
+                  { value: 'paid', label: t('paid') },
+                  { value: 'pending', label: t('pending') },
+                  { value: 'overdue', label: t('overdue') }
+                ]}
+                required
+              />
+              {editFormData.status === 'paid' && (
+                <Select
+                  label={t('payment_method')}
+                  value={editFormData.method}
+                  onChange={(e) => setEditFormData({ ...editFormData, method: e.target.value })}
+                  options={[
+                    { value: 'cash', label: t('cash') },
+                    { value: 'bank_transfer', label: t('bank_transfer') },
+                    { value: 'check', label: t('check_payment') },
+                    { value: 'online', label: t('online_payment') }
+                  ]}
+                  required
+                />
+              )}
+            </div>
+
+            {/* Collected by teacher toggle */}
+            {editFormData.status === 'paid' && (
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={editFormData.collectedByTeacher}
+                  onChange={(e) => setEditFormData({ ...editFormData, collectedByTeacher: e.target.checked })}
+                />
+                <span>{t('collected_by_teacher') || 'I have collected my payment share'}</span>
+              </label>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+              <Button variant="ghost" type="button" onClick={() => { setIsEditModalOpen(false); setEditingPayment(null); }}>{t('cancel')}</Button>
+              <Button type="submit">{t('save_changes') || 'Save Changes'}</Button>
             </div>
           </form>
         </Modal>

@@ -115,6 +115,7 @@ export interface Payment {
   method?: PaymentMethod;
   description: string;
   receiptNumber?: string;
+  collectedByTeacher: boolean; // Whether teacher received their share from center manager
   createdAt: string;
   updatedAt: string;
 }
