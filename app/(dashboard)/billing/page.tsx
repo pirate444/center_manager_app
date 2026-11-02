@@ -537,11 +537,18 @@ export default function BillingPage() {
                             </span>
                           </div>
                           <div className={styles.studentRowRight}>
-                            {/* Status dot summary */}
+                            {/* Status dot summary — based on current month only */}
                             <div className={styles.studentStatusSummary}>
-                              {studentPayments.some(p => p.status === 'paid') && <div className={`${styles.statusDot} ${styles.statusDotPaid}`} title={t('paid')} />}
-                              {studentPayments.some(p => p.status === 'pending') && <div className={`${styles.statusDot} ${styles.statusDotPending}`} title={t('pending')} />}
-                              {studentPayments.some(p => p.status === 'overdue') && <div className={`${styles.statusDot} ${styles.statusDotOverdue}`} title={t('overdue')} />}
+                              {(() => {
+                                const currentMonthPayments = studentPayments.filter(p => p.month === currentMonthValue);
+                                return (
+                                  <>
+                                    {currentMonthPayments.some(p => p.status === 'paid') && <div className={`${styles.statusDot} ${styles.statusDotPaid}`} title={`${t('paid')} (${formatMonth(currentMonthValue)})`} />}
+                                    {currentMonthPayments.some(p => p.status === 'pending') && <div className={`${styles.statusDot} ${styles.statusDotPending}`} title={`${t('pending')} (${formatMonth(currentMonthValue)})`} />}
+                                    {currentMonthPayments.some(p => p.status === 'overdue') && <div className={`${styles.statusDot} ${styles.statusDotOverdue}`} title={`${t('overdue')} (${formatMonth(currentMonthValue)})`} />}
+                                  </>
+                                );
+                              })()}
                             </div>
                             <span className={styles.sessionsBadge} title={t('total_sessions') || 'Total sessions'}>
                               <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

@@ -138,12 +138,53 @@
     display: none;
   }
 }
+
+/* Mobile: always show icon-only strip, expand on open */
 @media (max-width: 767px) {
-  .expanded, .collapsed {
-    width: 260px;
+  .sidebar {
+    transition: width 0.3s ease;
+    transform: none !important; /* Never slide off-screen on mobile */
   }
+
+  .expanded,
+  .collapsed,
+  .mobileHidden {
+    width: 56px;
+  }
+
+  .mobileOpen {
+    width: 260px;
+    z-index: 50;
+  }
+
+  /* When mobile-hidden (icon-only strip), hide labels & logo text */
+  .mobileHidden .logo span,
+  .mobileHidden .navItem span {
+    display: none;
+  }
+
+  .mobileHidden .header {
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .mobileHidden .navItem {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .mobileHidden .nav {
+    padding: 12px 4px;
+    align-items: center;
+  }
+
   .desktopOnly {
     display: none;
+  }
+
+  /* When overlay is shown (mobile open), shift it to start after the sidebar */
+  .overlay {
+    left: 260px;
   }
 }
 
@@ -157,3 +198,4 @@
   border-radius: 50%;
   border: 2px solid var(--bg-tertiary, #1e293b);
 }
+

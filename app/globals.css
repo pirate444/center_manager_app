@@ -682,7 +682,7 @@ img {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
   :root {
-    --sidebar-width: 0px;
+    --sidebar-width: 56px;
   }
 }
 
@@ -694,7 +694,7 @@ img {
   
   .main-content-expanded,
   .main-content-collapsed {
-    margin-inline-start: 0 !important;
+    margin-inline-start: 56px !important;
   }
 }
 
