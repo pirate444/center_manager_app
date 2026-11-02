@@ -19,36 +19,7 @@ const MONTH_KEYS = [
   'month_september', 'month_october', 'month_november', 'month_december',
 ];
 
-const DAY_MAP: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6,
-};
 
-/** Get ISO week number for a date */
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-}
-
-/** Count how many weeks in a given YYYY-MM month have at least one scheduled class day (1 session per week) */
-function countSessionsInMonth(schedule: { day: string }[], yearMonth: string): number {
-  if (!yearMonth || !schedule || schedule.length === 0) return 0;
-  const [y, m] = yearMonth.split('-').map(Number);
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const scheduleDays = schedule.map(s => DAY_MAP[s.day.toLowerCase()]).filter(d => d !== undefined);
-  const weeksWithSession = new Set<number>();
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(y, m - 1, day);
-    const dow = date.getDay();
-    if (scheduleDays.includes(dow)) {
-      weeksWithSession.add(getWeekNumber(date));
-    }
-  }
-  return weeksWithSession.size;
-}
 
 export default function BillingPage() {
   const { t } = useTranslation();
@@ -264,29 +235,23 @@ export default function BillingPage() {
     return Array.from(monthSet).sort().reverse();
   }, [payments]);
 
-  // Compute attended sessions (distinct weeks) per student per class per month from attendance records
-  const attendedSessionsMap = useMemo(() => {
-    // Track which weeks each student attended for each class/month
-    const weeksMap: Record<string, Set<number>> = {}; // key: `${studentId}-${classId}-${YYYY-MM}`
+  // Compute total sessions per class per month and attended sessions per student from attendance records
+  const { totalSessionsMap, attendedSessionsMap } = useMemo(() => {
+    const totalMap: Record<string, number> = {}; // key: `${classId}-${YYYY-MM}` → count of attendance records
+    const attendedMap: Record<string, number> = {}; // key: `${studentId}-${classId}-${YYYY-MM}` → present/late count
     attendanceRecords.forEach(record => {
       if (!record.date || !record.classId) return;
       const month = record.date.substring(0, 7); // YYYY-MM
-      const recordDate = new Date(record.date);
-      const weekNum = getWeekNumber(recordDate);
+      const classMonthKey = `${record.classId}-${month}`;
+      totalMap[classMonthKey] = (totalMap[classMonthKey] || 0) + 1;
       record.entries.forEach(entry => {
         if (entry.status === 'present' || entry.status === 'late') {
           const key = `${entry.studentId}-${record.classId}-${month}`;
-          if (!weeksMap[key]) weeksMap[key] = new Set();
-          weeksMap[key].add(weekNum);
+          attendedMap[key] = (attendedMap[key] || 0) + 1;
         }
       });
     });
-    // Convert sets to counts
-    const map: Record<string, number> = {};
-    for (const [key, weeks] of Object.entries(weeksMap)) {
-      map[key] = weeks.size;
-    }
-    return map;
+    return { totalSessionsMap: totalMap, attendedSessionsMap: attendedMap };
   }, [attendanceRecords]);
 
   // Build the class → students → payments grouped data
@@ -542,9 +507,9 @@ export default function BillingPage() {
                     const studentKey = `${cls.id}-${student.id}`;
                     const isStudentOpen = expandedStudents.includes(studentKey);
 
-                    // Calculate total sessions for this student in this class
+                    // Calculate total sessions for this student in this class from attendance records
                     const uniqueMonths = [...new Set(studentPayments.map(p => p.month).filter(Boolean))] as string[];
-                    const totalSessions = uniqueMonths.reduce((sum, month) => sum + countSessionsInMonth(cls.schedule, month), 0);
+                    const totalSessions = uniqueMonths.reduce((sum, month) => sum + (totalSessionsMap[`${cls.id}-${month}`] || 0), 0);
 
                     return (
                       <div key={studentKey} className={styles.studentRow}>
@@ -590,7 +555,7 @@ export default function BillingPage() {
                           <div className={styles.paymentsContainer}>
                             {studentPayments.length > 0 ? (
                               studentPayments.map(p => {
-                                const sessionsThisMonth = countSessionsInMonth(cls.schedule, p.month || '');
+                                const sessionsThisMonth = totalSessionsMap[`${cls.id}-${p.month}`] || 0;
                                 const attendedKey = `${student.id}-${cls.id}-${p.month}`;
                                 const attendedSessions = attendedSessionsMap[attendedKey] || 0;
                                 return (
