@@ -24,18 +24,30 @@ const DAY_MAP: Record<string, number> = {
   thursday: 4, friday: 5, saturday: 6,
 };
 
-/** Count how many sessions a class has in a given YYYY-MM month based on its weekly schedule */
+/** Get ISO week number for a date */
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/** Count how many weeks in a given YYYY-MM month have at least one scheduled class day (1 session per week) */
 function countSessionsInMonth(schedule: { day: string }[], yearMonth: string): number {
   if (!yearMonth || !schedule || schedule.length === 0) return 0;
   const [y, m] = yearMonth.split('-').map(Number);
   const daysInMonth = new Date(y, m, 0).getDate();
-  let count = 0;
   const scheduleDays = schedule.map(s => DAY_MAP[s.day.toLowerCase()]).filter(d => d !== undefined);
+  const weeksWithSession = new Set<number>();
   for (let day = 1; day <= daysInMonth; day++) {
-    const dow = new Date(y, m - 1, day).getDay();
-    if (scheduleDays.includes(dow)) count++;
+    const date = new Date(y, m - 1, day);
+    const dow = date.getDay();
+    if (scheduleDays.includes(dow)) {
+      weeksWithSession.add(getWeekNumber(date));
+    }
   }
-  return count;
+  return weeksWithSession.size;
 }
 
 export default function BillingPage() {
@@ -252,19 +264,28 @@ export default function BillingPage() {
     return Array.from(monthSet).sort().reverse();
   }, [payments]);
 
-  // Compute attended sessions per student per class per month from attendance records
+  // Compute attended sessions (distinct weeks) per student per class per month from attendance records
   const attendedSessionsMap = useMemo(() => {
-    const map: Record<string, number> = {}; // key: `${studentId}-${classId}-${YYYY-MM}`
+    // Track which weeks each student attended for each class/month
+    const weeksMap: Record<string, Set<number>> = {}; // key: `${studentId}-${classId}-${YYYY-MM}`
     attendanceRecords.forEach(record => {
       if (!record.date || !record.classId) return;
       const month = record.date.substring(0, 7); // YYYY-MM
+      const recordDate = new Date(record.date);
+      const weekNum = getWeekNumber(recordDate);
       record.entries.forEach(entry => {
         if (entry.status === 'present' || entry.status === 'late') {
           const key = `${entry.studentId}-${record.classId}-${month}`;
-          map[key] = (map[key] || 0) + 1;
+          if (!weeksMap[key]) weeksMap[key] = new Set();
+          weeksMap[key].add(weekNum);
         }
       });
     });
+    // Convert sets to counts
+    const map: Record<string, number> = {};
+    for (const [key, weeks] of Object.entries(weeksMap)) {
+      map[key] = weeks.size;
+    }
     return map;
   }, [attendanceRecords]);
 
