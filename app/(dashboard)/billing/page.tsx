@@ -46,11 +46,14 @@ export default function BillingPage() {
 
   // --- Accordion state ---
   const [expandedClasses, setExpandedClasses] = useState<string[]>([]);
-  const [expandedStudents, setExpandedStudents] = useState<string[]>([]);
+
+  // --- Month navigation (like absence journal) ---
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
 
   // --- Filters ---
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterMonth, setFilterMonth] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   
   const [formData, setFormData] = useState({
@@ -189,10 +192,15 @@ export default function BillingPage() {
     );
   }, []);
 
-  // Calculate totals
-  const totalCollected = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
-  const totalPending = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
-  const totalOverdue = payments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0);
+  // Selected month value in YYYY-MM format
+  const selectedMonthValue = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`;
+  const currentMonthValue = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
+  // Calculate totals for the selected month
+  const monthPayments = payments.filter(p => p.month === selectedMonthValue);
+  const totalCollected = monthPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+  const totalPending = monthPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
+  const totalOverdue = monthPayments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0);
 
   const studentOptions = [
     { value: '', label: t('select_student') || 'Select Student' },
@@ -219,8 +227,6 @@ export default function BillingPage() {
   };
   const monthOptions = getMonthOptions();
   
-  const currentMonthValue = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-
   const formatMonth = (monthValue?: string) => {
     if (!monthValue) return '';
     const [y, m] = monthValue.split('-');
@@ -228,12 +234,26 @@ export default function BillingPage() {
     return `${t(MONTH_KEYS[mIdx])} ${y}`;
   };
 
-  // Build unique months from existing payments for filter dropdown
-  const availableMonths = useMemo(() => {
-    const monthSet = new Set<string>();
-    payments.forEach(p => { if (p.month) monthSet.add(p.month); });
-    return Array.from(monthSet).sort().reverse();
-  }, [payments]);
+  // Month navigation
+  const goToPrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(y => y - 1);
+    } else {
+      setSelectedMonth(m => m - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(y => y + 1);
+    } else {
+      setSelectedMonth(m => m + 1);
+    }
+  };
+
+  const monthName = t(MONTH_KEYS[selectedMonth]);
 
   // Compute total sessions per class per month and attended sessions per student from attendance records
   const { totalSessionsMap, attendedSessionsMap } = useMemo(() => {
@@ -254,58 +274,49 @@ export default function BillingPage() {
     return { totalSessionsMap: totalMap, attendedSessionsMap: attendedMap };
   }, [attendanceRecords]);
 
-  // Build the class → students → payments grouped data
+  // Build the class → students → billing data for the SELECTED month
+  // Students without a payment record for the selected month are shown as "pending" automatically
   const groupedData = useMemo(() => {
     const activeStudents = students.filter(s => s.status === 'active' && s.enrolledClassIds.length > 0);
     const activeClasses = classes.filter(c => c.status === 'active');
 
-    // Build per-class data
     return activeClasses.map(cls => {
       const classStudents = activeStudents.filter(s => s.enrolledClassIds.includes(cls.id));
       
-      const studentsWithPayments = classStudents.map(student => {
-        let studentPayments = payments
-          .filter(p => p.studentId === student.id && p.classId === cls.id)
-          .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+      const studentsWithBilling = classStudents.map(student => {
+        // Find the payment for THIS student in THIS class for the SELECTED month
+        const monthPayment = payments.find(
+          p => p.studentId === student.id && p.classId === cls.id && p.month === selectedMonthValue
+        );
 
-        // Apply month filter
-        if (filterMonth !== 'all') {
-          studentPayments = studentPayments.filter(p => p.month === filterMonth);
-        }
+        // Determine billing status for this month:
+        // If a payment record exists → use its status
+        // If no payment record exists → treat as "pending"
+        const billingStatus: string = monthPayment ? monthPayment.status : 'pending';
+        const billingAmount: number = monthPayment ? monthPayment.amount : 0;
 
-        // Apply status filter
-        if (filterStatus !== 'all') {
-          studentPayments = studentPayments.filter(p => p.status === filterStatus);
-        }
-
-        return { student, payments: studentPayments };
+        return { student, payment: monthPayment || null, billingStatus, billingAmount };
       });
 
       // Apply search filter
-      const filteredStudents = studentsWithPayments.filter(({ student }) => {
+      const filteredStudents = studentsWithBilling.filter(({ student }) => {
         if (!searchQuery) return true;
         const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
         return fullName.includes(searchQuery.toLowerCase());
       });
 
-      // If we're filtering by status or month, hide students with 0 matching payments
-      const visibleStudents = (filterMonth !== 'all' || filterStatus !== 'all')
-        ? filteredStudents.filter(s => s.payments.length > 0)
+      // Apply status filter
+      const visibleStudents = filterStatus !== 'all'
+        ? filteredStudents.filter(s => s.billingStatus === filterStatus)
         : filteredStudents;
 
       return { cls, students: visibleStudents };
-    }).filter(group => group.students.length > 0); // hide empty classes
-  }, [students, classes, payments, searchQuery, filterMonth, filterStatus]);
+    }).filter(group => group.students.length > 0);
+  }, [students, classes, payments, searchQuery, filterStatus, selectedMonthValue]);
 
   const toggleClass = (classId: string) => {
     setExpandedClasses(prev =>
       prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId]
-    );
-  };
-
-  const toggleStudent = (key: string) => {
-    setExpandedStudents(prev =>
-      prev.includes(key) ? prev.filter(id => id !== key) : [...prev, key]
     );
   };
 
@@ -429,7 +440,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      {/* Filters Toolbar */}
+      {/* Month Navigation & Filters Toolbar */}
       <div className={styles.filtersToolbar}>
         <div className={styles.searchInputWrapper}>
           <div className={styles.searchIcon}>
@@ -444,16 +455,24 @@ export default function BillingPage() {
           />
         </div>
 
-        <select
-          className={styles.filterSelect}
-          value={filterMonth}
-          onChange={e => setFilterMonth(e.target.value)}
-        >
-          <option value="all">{t('all_months') || 'All months'}</option>
-          {availableMonths.map(m => (
-            <option key={m} value={m}>{formatMonth(m)}</option>
-          ))}
-        </select>
+        <div className={styles.monthNavGroup}>
+          <span className={styles.monthNavLabel}>{t('select_month') || 'SELECT MONTH'}</span>
+          <div className={styles.monthNav}>
+            <button className={styles.monthNavBtn} onClick={goToPrevMonth} title={t('previous') || 'Previous'}>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <span className={styles.monthLabel}>
+              {monthName} {selectedYear}
+            </span>
+            <button className={styles.monthNavBtn} onClick={goToNextMonth} title={t('next') || 'Next'}>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <select
           className={styles.filterSelect}
@@ -486,7 +505,7 @@ export default function BillingPage() {
                     {classStudents.length} {classStudents.length === 1 ? (t('student') || 'student') : (t('students') || 'students')}
                   </span>
                   <Link
-                    href={`/absence-journal?classId=${cls.id}&month=${currentMonthValue}`}
+                    href={`/absence-journal?classId=${cls.id}&month=${selectedMonthValue}`}
                     className={styles.journalLink}
                     onClick={e => e.stopPropagation()}
                   >
@@ -503,17 +522,14 @@ export default function BillingPage() {
 
               {isClassOpen && (
                 <div className={styles.classAccordionBody}>
-                  {classStudents.map(({ student, payments: studentPayments }) => {
-                    const studentKey = `${cls.id}-${student.id}`;
-                    const isStudentOpen = expandedStudents.includes(studentKey);
-
-                    // Calculate total sessions for this student in this class from attendance records
-                    const uniqueMonths = [...new Set(studentPayments.map(p => p.month).filter(Boolean))] as string[];
-                    const totalSessions = uniqueMonths.reduce((sum, month) => sum + (totalSessionsMap[`${cls.id}-${month}`] || 0), 0);
+                  {classStudents.map(({ student, payment, billingStatus, billingAmount }) => {
+                    const sessionsThisMonth = totalSessionsMap[`${cls.id}-${selectedMonthValue}`] || 0;
+                    const attendedKey = `${student.id}-${cls.id}-${selectedMonthValue}`;
+                    const attendedSessions = attendedSessionsMap[attendedKey] || 0;
 
                     return (
-                      <div key={studentKey} className={styles.studentRow}>
-                        <div className={styles.studentRowHeader} onClick={() => toggleStudent(studentKey)}>
+                      <div key={student.id} className={styles.studentRow}>
+                        <div className={styles.studentRowHeader}>
                           <div className={styles.studentRowLeft}>
                             <div className={styles.studentAvatar}>
                               {student.firstName.charAt(0)}{student.lastName.charAt(0)}
@@ -523,105 +539,91 @@ export default function BillingPage() {
                             </span>
                           </div>
                           <div className={styles.studentRowRight}>
-                            {/* Status dot summary — based on current month only */}
+                            {/* Billing status dot for this month */}
                             <div className={styles.studentStatusSummary}>
-                              {(() => {
-                                const currentMonthPayments = studentPayments.filter(p => p.month === currentMonthValue);
-                                return (
+                              <div
+                                className={`${styles.statusDot} ${
+                                  billingStatus === 'paid' ? styles.statusDotPaid
+                                    : billingStatus === 'overdue' ? styles.statusDotOverdue
+                                    : styles.statusDotPending
+                                }`}
+                                title={`${t(billingStatus)} (${formatMonth(selectedMonthValue)})`}
+                              />
+                            </div>
+                            {/* Status badge */}
+                            <span className={`${styles.paymentStatusBadge} ${
+                              billingStatus === 'paid' ? styles.badgePaid
+                                : billingStatus === 'overdue' ? styles.badgeOverdue
+                                : styles.badgePending
+                            }`}>
+                              {t(billingStatus)}
+                            </span>
+                            {/* Amount info */}
+                            {billingStatus === 'paid' && billingAmount > 0 && (
+                              <span className={styles.paidAmount}>
+                                {billingAmount} {t('dinar')}
+                              </span>
+                            )}
+                            {/* Sessions info */}
+                            <span className={styles.sessionsInfo} title={`${attendedSessions} attended / ${sessionsThisMonth} total sessions`}>
+                              <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                              {attendedSessions}/{sessionsThisMonth}
+                            </span>
+                            {/* Collected badge (only if payment exists and is paid) */}
+                            {payment && payment.status === 'paid' && (
+                              <span
+                                className={`${styles.collectedBadge} ${payment.collectedByTeacher ? styles.collectedYes : styles.collectedNo}`}
+                                onClick={(e) => { e.stopPropagation(); toggleCollected(payment); }}
+                                title={payment.collectedByTeacher ? (t('collected') || 'Collected') : (t('not_collected') || 'Not collected — click to toggle')}
+                              >
+                                {payment.collectedByTeacher ? (
                                   <>
-                                    {currentMonthPayments.some(p => p.status === 'paid') && <div className={`${styles.statusDot} ${styles.statusDotPaid}`} title={`${t('paid')} (${formatMonth(currentMonthValue)})`} />}
-                                    {currentMonthPayments.some(p => p.status === 'pending') && <div className={`${styles.statusDot} ${styles.statusDotPending}`} title={`${t('pending')} (${formatMonth(currentMonthValue)})`} />}
-                                    {currentMonthPayments.some(p => p.status === 'overdue') && <div className={`${styles.statusDot} ${styles.statusDotOverdue}`} title={`${t('overdue')} (${formatMonth(currentMonthValue)})`} />}
+                                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                    {t('collected') || 'Collected'}
                                   </>
-                                );
-                              })()}
-                            </div>
-                            <span className={styles.sessionsBadge} title={t('total_sessions') || 'Total sessions'}>
-                              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                              {totalSessions} {t('sessions') || 'sessions'}
-                            </span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                              {studentPayments.length} {studentPayments.length === 1 ? 'payment' : 'payments'}
-                            </span>
-                            <div className={`${styles.studentChevron} ${isStudentOpen ? styles.studentChevronOpen : ''}`}>
-                              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-
-                        {isStudentOpen && (
-                          <div className={styles.paymentsContainer}>
-                            {studentPayments.length > 0 ? (
-                              studentPayments.map(p => {
-                                const sessionsThisMonth = totalSessionsMap[`${cls.id}-${p.month}`] || 0;
-                                const attendedKey = `${student.id}-${cls.id}-${p.month}`;
-                                const attendedSessions = attendedSessionsMap[attendedKey] || 0;
-                                return (
-                                  <div key={p.id} className={styles.paymentRow}>
-                                    <div className={styles.paymentRowLeft}>
-                                      <span className={styles.paymentMonth}>{formatMonth(p.month) || 'Unknown'}</span>
-                                      <span className={styles.paymentAmount}>{p.amount} {t('dinar')}</span>
-                                      {/* Sessions info for this month */}
-                                      <span className={styles.sessionsInfo} title={`${attendedSessions} attended / ${sessionsThisMonth} total sessions`}>
-                                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                        {attendedSessions}/{sessionsThisMonth}
-                                      </span>
-                                    </div>
-                                    <div className={styles.paymentRowRight}>
-                                      {/* Payment status badge */}
-                                      <span className={`${styles.paymentStatusBadge} ${p.status === 'paid' ? styles.badgePaid : p.status === 'overdue' ? styles.badgeOverdue : styles.badgePending}`}>
-                                        {t(p.status)}
-                                      </span>
-                                      {/* Collected by teacher badge */}
-                                      {p.status === 'paid' && (
-                                        <span
-                                          className={`${styles.collectedBadge} ${p.collectedByTeacher ? styles.collectedYes : styles.collectedNo}`}
-                                          onClick={(e) => { e.stopPropagation(); toggleCollected(p); }}
-                                          title={p.collectedByTeacher ? (t('collected') || 'Collected') : (t('not_collected') || 'Not collected — click to toggle')}
-                                        >
-                                          {p.collectedByTeacher ? (
-                                            <>
-                                              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                                              {t('collected') || 'Collected'}
-                                            </>
-                                          ) : (
-                                            <>
-                                              <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01" /></svg>
-                                              {t('not_collected') || 'Not Collected'}
-                                            </>
-                                          )}
-                                        </span>
-                                      )}
-                                      {/* Edit button */}
-                                      {isManagerOrAdmin && (
-                                        <button
-                                          className={styles.editBtn}
-                                          onClick={(e) => { e.stopPropagation(); openEditModal(p); }}
-                                          title={t('edit_payment') || 'Edit payment'}
-                                        >
-                                          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                          </svg>
-                                        </button>
-                                      )}
-                                    </div>
-                                    {/* Description row */}
-                                    {p.description && (
-                                      <div className={styles.paymentDescRow}>
-                                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
-                                        <span>{p.description}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              <div className={styles.noPayments}>No payments recorded.</div>
+                                ) : (
+                                  <>
+                                    <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01" /></svg>
+                                    {t('not_collected') || 'Not Collected'}
+                                  </>
+                                )}
+                              </span>
+                            )}
+                            {/* Edit button (if payment exists) or Record button (if no payment) */}
+                            {isManagerOrAdmin && (
+                              payment ? (
+                                <button
+                                  className={styles.editBtn}
+                                  onClick={(e) => { e.stopPropagation(); openEditModal(payment); }}
+                                  title={t('edit_payment') || 'Edit payment'}
+                                >
+                                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                </button>
+                              ) : (
+                                <button
+                                  className={styles.recordBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setFormData({
+                                      ...formData,
+                                      studentId: student.id,
+                                      classId: cls.id,
+                                      months: [selectedMonthValue],
+                                    });
+                                    setIsModalOpen(true);
+                                  }}
+                                  title={t('record_payment') || 'Record payment'}
+                                >
+                                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                </button>
+                              )
                             )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}
@@ -632,7 +634,7 @@ export default function BillingPage() {
         })
       ) : (
         <div className={styles.noResults}>
-          {searchQuery || filterMonth !== 'all' || filterStatus !== 'all'
+          {searchQuery || filterStatus !== 'all'
             ? (t('no_results_found') || 'No results found for your filters.')
             : (t('no_billing_data') || 'No billing data available.')}
         </div>
