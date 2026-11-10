@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import ResourceSection from '@/models/ResourceSection';
 import { toPlain } from '@/lib/api-helpers';
+import { notifyNewResource } from '@/lib/push-notifications';
 
 // POST /api/resources/confirm — confirm upload and add file metadata to section
 // Body: { sectionId, key, fileName, fileSize, mimeType, uploadedBy }
@@ -33,6 +34,14 @@ export async function POST(request: NextRequest) {
     });
 
     await doc.save();
+
+    // Trigger push notification asynchronously to students in this class
+    notifyNewResource({
+      classId: doc.classId,
+      fileName,
+      uploadedBy,
+    }).catch((err) => console.error('Push notification for resource failed:', err));
+
     return NextResponse.json(toPlain(doc));
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });

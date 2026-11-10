@@ -11,6 +11,7 @@ export interface IUser extends Document {
   loginCode?: string;
   studentId?: string;
   teacherId?: string;
+  pushToken?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +33,7 @@ const UserSchema = new Schema<IUser>(
     loginCode: { type: String, sparse: true },
     studentId: { type: String },
     teacherId: { type: String },
+    pushToken: { type: String },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
