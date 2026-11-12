@@ -270,7 +270,7 @@ export default function StudentDashboardPage() {
                 className={styles.studentCardIcon}
                 style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}
               >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -341,7 +341,7 @@ export default function StudentDashboardPage() {
                 className={styles.studentCardIcon}
                 style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4' }}
               >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -412,7 +412,7 @@ export default function StudentDashboardPage() {
                 className={styles.studentCardIcon}
                 style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}
               >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -500,7 +500,7 @@ export default function StudentDashboardPage() {
               className={styles.shortcutIcon}
               style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -524,7 +524,7 @@ export default function StudentDashboardPage() {
               className={styles.shortcutIcon}
               style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4' }}
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -548,7 +548,7 @@ export default function StudentDashboardPage() {
               className={styles.shortcutIcon}
               style={{ background: 'rgba(139, 92, 246, 0.15)', color: '#8b5cf6' }}
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -572,7 +572,7 @@ export default function StudentDashboardPage() {
               className={styles.shortcutIcon}
               style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981' }}
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -596,7 +596,7 @@ export default function StudentDashboardPage() {
               className={styles.shortcutIcon}
               style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899' }}
             >
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -619,3 +619,4 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
+
