@@ -267,3 +267,4 @@ export async function notifyScheduleUpdate(params: {
     console.error('Failed to notify schedule update:', err);
   }
 }
+

@@ -348,6 +348,41 @@ export default function LoginPage() {
             </div>
           </form>
         )}
+
+        {/* Mobile App Download */}
+        <div
+          style={{
+            marginTop: '1.75rem',
+            paddingTop: '1.25rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            textAlign: 'center',
+          }}
+        >
+          <a
+            href="/download"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '0.65rem 1.25rem',
+              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
+              border: '1px solid rgba(6, 182, 212, 0.35)',
+              borderRadius: '12px',
+              color: '#06b6d4',
+              textDecoration: 'none',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span>📱 Télécharger l&apos;App Mobile (Android APK)</span>
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -91,6 +91,24 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
             );
           })}
         </nav>
+
+        <a
+          href="/download"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.downloadBox}
+          title={collapsed ? "Télécharger l'Application Android (APK)" : ''}
+        >
+          <svg className={styles.downloadIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          {!collapsed && (
+            <div className={styles.downloadText}>
+              <span className={styles.downloadTitle}>App Android</span>
+              <span className={styles.downloadSubtitle}>Télécharger APK</span>
+            </div>
+          )}
+        </a>
       </aside>
     </>
   );

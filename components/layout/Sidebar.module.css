@@ -199,3 +199,49 @@
   border: 2px solid var(--bg-tertiary, #1e293b);
 }
 
+.downloadBox {
+  margin: 16px 12px 16px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-primary, #f8fafc);
+  transition: all 0.2s ease;
+}
+
+.downloadBox:hover {
+  background: rgba(6, 182, 212, 0.16);
+  border-color: rgba(6, 182, 212, 0.5);
+  transform: translateY(-1px);
+}
+
+.downloadIcon {
+  width: 20px;
+  height: 20px;
+  color: #06b6d4;
+  flex-shrink: 0;
+}
+
+.downloadText {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.downloadTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+}
+
+.downloadSubtitle {
+  font-size: 10px;
+  color: var(--text-secondary, #94a3b8);
+  white-space: nowrap;
+}
+
