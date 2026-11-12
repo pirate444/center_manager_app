@@ -20,11 +20,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && userRole) {
-      if (userRole === 'student') {
-        router.push('/schedule');
-      } else {
-        router.push('/dashboard');
-      }
+      router.push('/dashboard');
     }
   }, [isAuthenticated, userRole, router]);
 
