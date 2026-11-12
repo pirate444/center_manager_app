@@ -21,6 +21,22 @@
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+.arrowIcon {
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .trigger {
+    padding: 4px 8px;
+    gap: 4px;
+    font-size: 0.75rem;
+    border-radius: 12px;
+  }
+  .arrowIcon {
+    display: none;
+  }
+}
+
 .dropdown {
   position: absolute;
   top: calc(100% + 8px);

@@ -61,7 +61,7 @@ export default function TopBar({ onMobileMenuToggle, title }: TopBarProps) {
         <LanguageSwitcher />
 
         {user && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className={styles.userSection}>
             <div className={styles.profileBtn}>
               <div className={styles.avatar}>
                 {user.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
@@ -75,7 +75,7 @@ export default function TopBar({ onMobileMenuToggle, title }: TopBarProps) {
               aria-label="Logout"
               title={t('logout') || 'Logout'}
             >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>

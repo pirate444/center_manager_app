@@ -36,7 +36,7 @@ export default function LanguageSwitcher() {
       <button className={styles.trigger} onClick={() => setIsOpen(!isOpen)}>
         <span>{currentLang.flag}</span>
         <span>{currentLang.code.toUpperCase()}</span>
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+        <svg className={styles.arrowIcon} width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>

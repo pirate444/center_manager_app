@@ -36,12 +36,16 @@
   font-weight: 600;
   color: var(--text-primary, #f8fafc);
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rightSection {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .searchContainer {
@@ -84,42 +88,37 @@ html[dir="rtl"] .searchInput {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-.iconBtn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary, #94a3b8);
-  cursor: pointer;
+.appDownloadBtn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border-radius: 50%;
-  position: relative;
-  transition: all 0.2s;
-}
-
-.iconBtn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary, #f8fafc);
-}
-
-.logoutBtn {
-  background: transparent;
-  border: none;
-  color: var(--error, #ef4444);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.2s;
+  gap: 6px;
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  color: #06b6d4;
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
-.logoutBtn:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+.appDownloadBtn:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.5);
+  color: #22d3ee;
+  transform: translateY(-1px);
+}
+
+.appDownloadText {
+  white-space: nowrap;
+}
+
+.userSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .profileBtn {
@@ -149,6 +148,7 @@ html[dir="rtl"] .searchInput {
   color: white;
   font-weight: 600;
   font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .userName {
@@ -157,50 +157,87 @@ html[dir="rtl"] .searchInput {
   font-weight: 500;
 }
 
+.logoutBtn {
+  background: transparent;
+  border: none;
+  color: var(--error, #ef4444);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.logoutBtn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+
 @media (max-width: 767px) {
+  .topbar {
+    height: 56px;
+    padding: 0 10px;
+  }
+
+  .leftSection {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .pageTitle {
+    font-size: 1.05rem;
+    max-width: 140px;
+  }
+
   .menuBtn {
     display: flex;
+    padding: 6px;
   }
+
   .searchContainer {
     display: none;
   }
+
+  .rightSection {
+    gap: 6px;
+  }
+
+  .userSection {
+    gap: 4px;
+  }
+
   .userName {
     display: none;
   }
+
   .profileBtn {
-    padding: 4px;
+    padding: 2px;
   }
-  .topbar {
-    padding: 0 12px;
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
   }
-  .rightSection {
-    gap: 8px;
+
+  .logoutBtn {
+    padding: 6px;
   }
-}
 
-.appDownloadBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(6, 182, 212, 0.12);
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  color: #06b6d4;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
+  .appDownloadBtn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(6, 182, 212, 0.14);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+  }
 
-.appDownloadBtn:hover {
-  background: rgba(6, 182, 212, 0.22);
-  border-color: rgba(6, 182, 212, 0.5);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-@media (max-width: 640px) {
   .appDownloadText {
     display: none;
   }
