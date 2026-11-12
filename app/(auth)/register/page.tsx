@@ -18,7 +18,7 @@ export default function RegisterPage() {
 function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, userRole } = useAuth();
   const { t } = useTranslation();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -54,9 +54,13 @@ function RegisterContent() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      if (userRole === 'student') {
+        router.push('/student-dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, userRole, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

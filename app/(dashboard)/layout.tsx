@@ -23,7 +23,9 @@ export default function DashboardLayout({
       if (!isAuthenticated) {
         router.push('/login');
       } else if (userRole === 'student' && pathname === '/dashboard') {
-        router.push('/schedule');
+        router.replace('/student-dashboard');
+      } else if (userRole && userRole !== 'student' && pathname === '/student-dashboard') {
+        router.replace('/dashboard');
       }
     }
   }, [isAuthenticated, loading, router, userRole, pathname]);
