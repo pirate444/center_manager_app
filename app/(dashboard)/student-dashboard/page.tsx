@@ -171,7 +171,13 @@ export default function StudentDashboardPage() {
       const nextSession = candidates[0] || null;
 
       // 3. Find latest uploaded resource in student classes
-      let latestFile: any = null;
+      let latestFile: {
+        fileName: string;
+        className: string;
+        uploadedAt: string;
+        fileSize: string;
+        timestamp: number;
+      } | null = null;
       try {
         for (const cls of enrolledClasses) {
           const res = await fetch(`/api/resources?classId=${cls.id}`);
@@ -182,7 +188,7 @@ export default function StudentDashboardPage() {
                 for (const f of sec.files || []) {
                   if (
                     !latestFile ||
-                    new Date(f.uploadedAt).getTime() > new Date(latestFile.uploadedAt).getTime()
+                    new Date(f.uploadedAt).getTime() > latestFile.timestamp
                   ) {
                     latestFile = {
                       fileName: f.fileName,
@@ -191,6 +197,7 @@ export default function StudentDashboardPage() {
                         language === 'fr' ? 'fr-FR' : 'en-US',
                         { month: 'short', day: 'numeric' }
                       ),
+                      timestamp: new Date(f.uploadedAt).getTime(),
                       fileSize: f.fileSize
                         ? `${(f.fileSize / (1024 * 1024)).toFixed(1)} MB`
                         : 'PDF',
@@ -205,30 +212,26 @@ export default function StudentDashboardPage() {
         // silently continue
       }
 
-      // 4. Find payment status
-      const studentPayments = payments
-        .filter((p) => p.studentId === user.studentId)
-        .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-
-      const latestP = studentPayments[0] || null;
-      const paymentInfo = latestP
-        ? {
-            status: latestP.status,
-            amount: latestP.amount,
-            month:
-              latestP.month ||
-              new Date().toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
-                month: 'long',
-              }),
-            dueDate: latestP.dueDate,
-          }
-        : {
-            status: 'paid' as const,
-            amount: 0,
-            month: new Date().toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
-              month: 'long',
-            }),
-          };
+      // 4. Find this month's payment status
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const currentMonthName = now.toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
+        month: 'long',
+      });
+      const currentMonthPayment = payments.find(
+        (p) => p.studentId === user.studentId && p.month === currentMonth
+      );
+      const paymentDeadline = new Date(now.getFullYear(), now.getMonth(), 21);
+      const paymentInfo: {
+        status: 'paid' | 'pending' | 'overdue' | 'partial' | 'none';
+        amount: number;
+        month: string;
+        dueDate: string;
+      } = {
+        status: currentMonthPayment?.status || 'pending',
+        amount: currentMonthPayment?.amount || 0,
+        month: currentMonthName,
+        dueDate: `${currentMonth}-${String(paymentDeadline.getDate()).padStart(2, '0')}`,
+      };
 
       setStudentData({
         nextSession,
