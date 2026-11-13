@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { classesStorage, studentsStorage, attendanceStorage } from '@/lib/storage';
 import { ClassItem, Student, AttendanceRecord } from '@/lib/types';
 import { Select } from '@/components/ui/Select';
+
 import { Card } from '@/components/ui/Card';
 import styles from './AbsenceJournal.module.css';
 
@@ -187,12 +188,12 @@ export default function AbsenceJournalPage() {
     return SHORT_DAY_KEYS[dayOfWeek]?.[language] || '';
   };
 
-  const classOptions = [
-    { value: '', label: t('select_class') },
-    ...classes.map(c => ({ value: c.id, label: `${c.name} (${c.subject})` })),
-  ];
 
   const monthName = t(MONTH_KEYS[selectedMonth]);
+  const classOptions = [
+    { value: '', label: t('select_class') },
+    ...classes.map((classItem) => ({ value: classItem.id, label: `${classItem.name} (${classItem.subject})` })),
+  ];
 
   return (
     <div className={`page-container animate-fadeIn ${styles.container}`}>
@@ -204,32 +205,52 @@ export default function AbsenceJournalPage() {
 
       {/* Controls */}
       <div className={styles.controls}>
-        <div className={styles.controlGroup} style={{ minWidth: '220px', flex: 1, maxWidth: '360px' }}>
-          <Select
-            label={t('classes')}
-            value={selectedClassId}
-            onChange={(e) => setSelectedClassId(e.target.value)}
-            options={classOptions}
-          />
-        </div>
-
-        <div className={styles.controlGroup}>
-          <span className={styles.controlLabel}>{t('select_month')}</span>
-          <div className={styles.monthNav}>
-            <button className={styles.monthNavBtn} onClick={goToPrevMonth} title={t('previous')}>
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span className={styles.monthLabel}>
-              {monthName} {selectedYear}
-            </span>
-            <button className={styles.monthNavBtn} onClick={goToNextMonth} title={t('next')}>
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+        {isManagerOrAdmin ? (
+          <div className={styles.adminClassChips} role="group" aria-label={t('classes')}>
+            {classes.map((classItem) => {
+              const isSelected = classItem.id === selectedClassId;
+              return (
+                <button
+                  key={classItem.id}
+                  type="button"
+                  onClick={() => setSelectedClassId(classItem.id)}
+                  className={`${styles.adminClassChip} ${isSelected ? styles.adminClassChipActive : ''}`}
+                  aria-pressed={isSelected}
+                >
+                  <span className={styles.adminClassDot} style={{ backgroundColor: classItem.color || 'var(--text-accent)' }} />
+                  {classItem.name}
+                </button>
+              );
+            })}
           </div>
+        ) : (
+          <div className={styles.controlGroup} style={{ minWidth: '220px', flex: 1, maxWidth: '360px' }}>
+            <Select
+              label={t('classes')}
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              options={classOptions}
+            />
+          </div>
+        )}
+
+        <div className={styles.monthNav}>
+          <button className={styles.monthNavBtn} onClick={goToPrevMonth} title={t('previous')} aria-label={t('previous')}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <span className={styles.monthLabel}>
+            <svg className={styles.monthCalendarIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {monthName} {selectedYear}
+          </span>
+          <button className={styles.monthNavBtn} onClick={goToNextMonth} title={t('next')} aria-label={t('next')}>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -255,6 +276,67 @@ export default function AbsenceJournalPage() {
         </div>
       )}
 
+      {/* Admin monthly student cards */}
+      {isManagerOrAdmin && activeClass && enrolledStudents.length > 0 && (
+        <section className={styles.adminStudentSection}>
+          <h2 className={styles.adminSectionTitle}>
+            {language === 'fr' ? 'Élèves inscrits' : 'Enrolled Students'}
+            <span> ({enrolledStudents.length})</span>
+          </h2>
+          <div className={styles.adminStudentList}>
+            {enrolledStudents.map((student) => {
+              const summary = studentSummaries[student.id] || { present: 0, absent: 0, late: 0, excused: 0 };
+              const initials = `${student.firstName?.[0] || ''}${student.lastName?.[0] || ''}`.toUpperCase();
+              return (
+                <article key={student.id} className={styles.adminStudentCard}>
+                  <div className={styles.adminStudentHeader}>
+                    <div className={styles.adminAvatar}>{initials || '?'}</div>
+                    <div className={styles.adminStudentInfo}>
+                      <span className={styles.adminStudentName}>{student.firstName} {student.lastName}</span>
+                      <span className={styles.adminStudentGrade}>{activeClass.name}</span>
+                    </div>
+                    <div className={styles.adminSummaryPills}>
+                      <span className={`${styles.adminPill} ${styles.adminPillPresent}`}>✓ {summary.present}</span>
+                      <span className={`${styles.adminPill} ${styles.adminPillAbsent}`}>✗ {summary.absent}</span>
+                    </div>
+                  </div>
+                  {monthRecords.length > 0 && (
+                    <div className={styles.adminTimeline}>
+                      <span className={styles.adminTimelineTitle}>
+                        {language === 'fr' ? 'Séances du mois :' : 'Sessions this month:'}
+                      </span>
+                      <div className={styles.adminDayChips}>
+                        {monthRecords.map((record) => {
+                          const entry = record.entries.find((item) => item.studentId === student.id);
+                          const status = entry?.status || 'none';
+                          const dayNumber = new Date(record.date).getDate();
+                          const statusClass = status === 'present'
+                            ? styles.adminDayPresent
+                            : status === 'absent'
+                              ? styles.adminDayAbsent
+                              : status === 'late'
+                                ? styles.adminDayLate
+                                : status === 'excused'
+                                  ? styles.adminDayExcused
+                                  : styles.adminDayNone;
+                          const symbol = status === 'present' ? '✓' : status === 'absent' ? '✗' : status === 'late' ? '⏱' : status === 'excused' ? 'E' : '—';
+                          return (
+                            <span key={record.id} className={`${styles.adminDayChip} ${statusClass}`} title={`${record.date}: ${status}`}>
+                              <span>{dayNumber}</span>
+                              <span>{symbol}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Journal View */}
       {!activeClass ? (
         <Card>
@@ -274,7 +356,7 @@ export default function AbsenceJournalPage() {
             <p>{t('no_students')}</p>
           </div>
         </Card>
-      ) : isStudent ? (
+      ) : isManagerOrAdmin ? null : isStudent ? (
         /* ===== STUDENT CALENDAR VIEW ===== */
         <>
           {enrolledStudents.map((student) => {

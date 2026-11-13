@@ -11,6 +11,7 @@ export interface ISettings extends Document {
   workingDays: string[];
   startTime: string;
   endTime: string;
+  physicalClassCount: number;
 }
 
 const SettingsSchema = new Schema<ISettings>(
@@ -25,6 +26,7 @@ const SettingsSchema = new Schema<ISettings>(
     workingDays: [{ type: String }],
     startTime: { type: String, default: '08:00' },
     endTime: { type: String, default: '18:00' },
+    physicalClassCount: { type: Number, default: 1, min: 1 },
   },
   { timestamps: true }
 );

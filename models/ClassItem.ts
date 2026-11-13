@@ -9,6 +9,7 @@ const ScheduleSlotSchema = new Schema(
     },
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
+    room: { type: String },
   },
   { _id: false }
 );

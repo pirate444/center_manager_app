@@ -210,7 +210,15 @@ export default function SettingsPage() {
                   onChange={e => setSettings({...settings, address: e.target.value})} 
                 />
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
+                  <Input
+                    type="number"
+                    label={t('physical_class_count') || 'Number of physical classrooms'}
+                    value={settings.physicalClassCount ?? 1}
+                    onChange={e => setSettings({ ...settings, physicalClassCount: Math.max(1, Number(e.target.value) || 1) })}
+                    min={1}
+                    required
+                  />
                   <Input 
                     label={t('phone')} 
                     value={settings.phone} 

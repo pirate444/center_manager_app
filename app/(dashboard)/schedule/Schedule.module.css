@@ -1,187 +1,278 @@
-.scheduleGrid {
+.pageHeader {
   display: flex;
-  flex-direction: column;
-  background: var(--bg-card);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pageSubtitle {
+  margin-top: 0.4rem;
+  color: var(--text-secondary);
+}
+
+.classSelector {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(240px, 1fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-lg);
-  overflow: hidden;
+  background: var(--bg-card);
 }
 
-.headerRow {
-  display: flex;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid var(--border-subtle);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  min-width: max-content;
-}
-
-.cornerHeader {
-  width: 100px;
-  flex-shrink: 0;
-  padding: 1rem;
+.classSelectorLabel {
+  color: var(--text-secondary);
   font-weight: 600;
+}
+
+.selectedClassCard {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
+}
+
+.classColor {
+  width: 12px;
+  height: 42px;
+  flex: 0 0 12px;
+  border-radius: 8px;
+}
+
+.selectedClassInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.selectedClassInfo h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.selectedClassInfo p {
+  margin: 0.25rem 0 0;
   color: var(--text-secondary);
   font-size: 0.875rem;
-  text-align: center;
-  border-inline-end: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.timeHeadersContainer {
-  display: flex;
-  flex-grow: 1;
-}
-
-.timeHeaderBlock {
-  width: 100px;
-  /* matches PIXELS_PER_HOUR */
+.sessionCount {
   flex-shrink: 0;
-  padding: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   font-size: 0.875rem;
-  text-align: center;
-  border-inline-end: 1px solid var(--border-subtle);
 }
 
-.timeHeaderBlock:last-child {
-  border-inline-end: none;
-}
-
-.bodyContainer {
-  height: 600px;
-  overflow: auto;
-  position: relative;
-}
-
-.gridBody {
-  display: flex;
-  flex-direction: column;
-  min-width: max-content;
-}
-
-.dayRow {
-  display: flex;
-  border-bottom: 1px solid var(--border-subtle);
-  min-height: 90px;
-  position: relative;
-}
-
-.dayRow:last-child {
-  border-bottom: none;
-}
-
-.todayRow {
-  background: rgba(6, 182, 212, 0.02);
-}
-
-.dayLabel {
-  width: 100px;
-  flex-shrink: 0;
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  text-align: center;
-  border-inline-end: 1px solid var(--border-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.todayLabel {
-  color: var(--accent-teal);
-  background: rgba(6, 182, 212, 0.05);
-}
-
-.dayRowContent {
-  position: relative;
-  display: flex;
-  flex-grow: 1;
-  min-height: 60px;
-}
-
-.gridLines {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  pointer-events: none;
-}
-
-.gridLineHour {
-  width: 100px;
-  /* matches PIXELS_PER_HOUR */
-  flex-shrink: 0;
-  border-inline-end: 1px solid var(--border-subtle);
-}
-
-/* Individual session tag: positioned absolutely on the timeline */
-.sessionTag {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  height: 19px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 600;
-  font-family: inherit;
-  white-space: nowrap;
+.weeklyAgenda {
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: filter 0.15s, transform 0.15s, box-shadow 0.15s;
-  z-index: 5;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
 }
 
-.sessionTag:hover {
-  filter: brightness(1.15);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
-  z-index: 10;
+.agendaDay {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  min-height: 76px;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.isDragging {
-  opacity: 0.5;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-  z-index: 15;
+.agendaDay:last-child {
+  border-bottom: 0;
 }
 
-.tagSubject {
+.agendaDay h3 {
+  margin: 0.35rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
 }
 
-.tagClass {
-  opacity: 0.85;
-  font-weight: 500;
+.noSessions {
+  padding: 0.5rem 0;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
 }
 
-.controls {
+.sessionCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-inline-start: 3px solid var(--text-accent);
+  border-radius: var(--border-radius-md);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.sessionCard:last-child {
+  margin-bottom: 0;
+}
+
+.sessionInfo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  color: var(--text-secondary);
+}
+
+.sessionInfo strong {
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.sessionActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.editSessionForm,
+.addSessionForm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.editSessionForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+
+.editSessionForm > :nth-child(3),
+.editSessionForm > :nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.timeInputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.modalClassName {
+  padding: 0.75rem;
+  border-radius: var(--border-radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.emptyState {
+  padding: 2rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.studentScheduleList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 1rem;
+}
+
+.publicSessionCard {
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-inline-start: 4px solid;
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-card);
+}
+
+.publicSessionTop {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--text-secondary);
 }
 
-.filters {
-  display: flex;
-  gap: 1rem;
-  flex: 1;
+.publicSessionTop span {
+  white-space: nowrap;
 }
 
-@media (max-width: 1024px) {
-  .scheduleGrid {
-    overflow-x: auto;
+.publicSessionCard h2 {
+  margin: 0.75rem 0 0.25rem;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+}
+
+.publicSessionCard p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .pageHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pageHeader > button {
+    align-self: flex-start;
+  }
+
+  .classSelector {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .selectedClassCard {
+    flex-wrap: wrap;
+    padding: 0.875rem;
+  }
+
+  .sessionCount {
+    width: 100%;
+    padding-inline-start: calc(12px + 0.875rem);
+  }
+
+  .agendaDay {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 0.875rem;
+  }
+
+  .agendaDay h3 {
+    margin-top: 0;
+  }
+
+  .sessionCard {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .editSessionForm,
+  .timeInputs {
+    grid-template-columns: 1fr;
+  }
+
+  .editSessionForm > :nth-child(3),
+  .editSessionForm > :nth-child(4) {
+    grid-column: auto;
   }
 }

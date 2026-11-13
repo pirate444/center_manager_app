@@ -70,6 +70,7 @@ export interface ScheduleSlot {
   day: DayOfWeek;
   startTime: string; // HH:mm format
   endTime: string;   // HH:mm format
+  room?: string;
 }
 
 export interface ClassItem {
@@ -177,6 +178,7 @@ export interface CenterSettings {
   workingDays: DayOfWeek[];
   startTime: string;
   endTime: string;
+  physicalClassCount?: number;
 }
 
 // Dashboard stats
