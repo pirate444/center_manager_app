@@ -497,8 +497,69 @@
   .studentOverviewGrid {
     grid-template-columns: 1fr;
   }
-  .studentShortcutsGrid {
-    grid-template-columns: repeat(2, 1fr);
+  .shortcutsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .studentOverviewGrid {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .studentCard {
+    min-height: 0;
+    padding: 1.25rem 1rem;
+  }
+
+  .studentCard:hover {
+    transform: none;
+  }
+
+  .studentCardHeader {
+    gap: 0.75rem;
+  }
+
+  .studentCardTitle {
+    font-size: 0.75rem;
+  }
+
+  .studentCardValue {
+    overflow-wrap: anywhere;
+    font-size: 1.2rem;
+  }
+
+  .studentCardMeta {
+    font-size: 0.8125rem;
+  }
+
+  .studentCardBtn {
+    min-height: 44px;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .shortcutsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .shortcutCard {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem 1rem;
+    min-height: 68px;
+  }
+
+  .shortcutCard > div:last-child {
+    min-width: 0;
+  }
+
+  .shortcutTitle,
+  .shortcutSubtitle {
+    text-align: left;
   }
 }
 
