@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useSyncExternalStore, ReactNode } from 'react';
 
 type Language = 'fr' | 'en';
 type Dir = 'rtl' | 'ltr';
@@ -181,6 +181,12 @@ const translations: Record<string, Record<Language, string>> = {
   physical_class_count: { fr: 'Nombre de salles physiques', en: 'Number of physical classrooms' },
   physical_class: { fr: 'Salle physique', en: 'Physical classroom' },
   select_schedule_class: { fr: 'Sélectionner une classe à planifier', en: 'Select a class to schedule' },
+  daily_room_schedule: { fr: 'Choisissez un jour pour voir les salles et leur disponibilité.', en: 'Choose a day to see every classroom and its availability.' },
+  select_day: { fr: 'Sélectionner un jour', en: 'Select day' },
+  physical_classrooms: { fr: 'Salles physiques', en: 'Physical classrooms' },
+  available: { fr: 'Disponible', en: 'Available' },
+  available_time_gaps: { fr: 'Créneaux horaires disponibles', en: 'Available time gaps' },
+  no_available_time_gaps: { fr: 'Aucun créneau libre pendant les heures d’ouverture.', en: 'No open time remains during working hours.' },
   class_weekly_schedule: { fr: 'Planning hebdomadaire de la classe', en: 'Class weekly schedule' },
   no_scheduled_sessions: { fr: 'Aucune séance planifiée pour cette classe.', en: 'No sessions scheduled for this class.' },
   room_conflict: { fr: 'Cette salle est déjà réservée pendant ce créneau.', en: 'This classroom is already booked during this time.' },
@@ -201,7 +207,12 @@ const translations: Record<string, Record<Language, string>> = {
   unenroll_student: { fr: 'Désinscrire', en: 'Unenroll Student' },
 
   // Schedule
-  weekly_schedule: { fr: 'Emploi du temps hebdomadaire', en: 'Weekly Schedule' },
+  weekly_schedule: { fr: 'Planning journalier des salles', en: 'Daily Classroom Schedule' },
+  day: { fr: 'Jour', en: 'Day' },
+  sessions: { fr: 'séances', en: 'sessions' },
+  add_session: { fr: 'Ajouter une séance', en: 'Add Session' },
+  edit_session: { fr: 'Modifier la séance', en: 'Edit Session' },
+  no_sessions_found: { fr: 'Aucune séance planifiée.', en: 'No sessions scheduled.' },
   day_view: { fr: 'Vue journalière', en: 'Day View' },
   week_view: { fr: 'Vue hebdomadaire', en: 'Week View' },
   today: { fr: 'Aujourd\'hui', en: 'Today' },
@@ -354,28 +365,46 @@ const translations: Record<string, Record<Language, string>> = {
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LANGUAGE_STORAGE_KEY = 'app_language';
+const languageListeners = new Set<() => void>();
+
+function subscribeToLanguage(listener: () => void) {
+  languageListeners.add(listener);
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === LANGUAGE_STORAGE_KEY) listener();
+  };
+  window.addEventListener('storage', handleStorage);
+
+  return () => {
+    languageListeners.delete(listener);
+    window.removeEventListener('storage', handleStorage);
+  };
+}
+
+function getStoredLanguage(): Language {
+  const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  return savedLanguage === 'fr' || savedLanguage === 'en' ? savedLanguage : 'en';
+}
+
+function getServerLanguage(): Language {
+  return 'en';
+}
+
+function updateStoredLanguage(language: Language) {
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  languageListeners.forEach((listener) => listener());
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en');
+  const language = useSyncExternalStore(subscribeToLanguage, getStoredLanguage, getServerLanguage);
 
   useEffect(() => {
-    // Load language from localStorage on mount
-    const savedLanguage = localStorage.getItem('app_language') as Language;
-    if (savedLanguage && (savedLanguage === 'fr' || savedLanguage === 'en')) {
-      setLanguageState(savedLanguage);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Update HTML dir and lang attributes
-    const dir = 'ltr';
-    document.documentElement.dir = dir;
+    document.documentElement.dir = 'ltr';
     document.documentElement.lang = language;
-    localStorage.setItem('app_language', language);
   }, [language]);
 
   const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
+    updateStoredLanguage(lang);
   };
 
   const t = (key: string): string => {

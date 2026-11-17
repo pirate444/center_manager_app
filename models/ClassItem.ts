@@ -19,7 +19,7 @@ export interface IClassItem extends Document {
   subject: string;
   teacherId: string;
   room: string;
-  schedule: { day: string; startTime: string; endTime: string }[];
+  schedule: { day: string; startTime: string; endTime: string; room?: string }[];
   maxCapacity: number;
   enrolledStudentIds: string[];
   color: string;

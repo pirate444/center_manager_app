@@ -84,7 +84,7 @@ html[dir="rtl"] .searchInput {
 
 .searchInput:focus {
   width: 240px;
-  border-color: var(--primary, #06b6d4);
+  border-color: var(--primary);
   background-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -92,9 +92,9 @@ html[dir="rtl"] .searchInput {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.28);
-  color: #06b6d4;
+  background: rgba(14, 173, 154, 0.1);
+  border: 1px solid rgba(14, 173, 154, 0.28);
+  color: var(--primary-light);
   padding: 6px 12px;
   border-radius: 18px;
   font-size: 0.8125rem;
@@ -105,9 +105,9 @@ html[dir="rtl"] .searchInput {
 }
 
 .appDownloadBtn:hover {
-  background: rgba(6, 182, 212, 0.2);
-  border-color: rgba(6, 182, 212, 0.5);
-  color: #22d3ee;
+  background: rgba(14, 173, 154, 0.18);
+  border-color: rgba(14, 173, 154, 0.48);
+  color: var(--primary-light);
   transform: translateY(-1px);
 }
 
@@ -141,11 +141,11 @@ html[dir="rtl"] .searchInput {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary, #06b6d4), var(--secondary, #6366f1));
+  background: var(--accent-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-inverse);
   font-weight: 600;
   font-size: 0.875rem;
   flex-shrink: 0;
@@ -195,7 +195,21 @@ html[dir="rtl"] .searchInput {
 
   .menuBtn {
     display: flex;
-    padding: 6px;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+
+  .menuBtn:active {
+    background: rgba(14, 173, 154, 0.14);
+    border-color: rgba(14, 173, 154, 0.35);
   }
 
   .searchContainer {
@@ -234,8 +248,8 @@ html[dir="rtl"] .searchInput {
     padding: 0;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(6, 182, 212, 0.14);
-    border: 1px solid rgba(6, 182, 212, 0.35);
+    background: rgba(14, 173, 154, 0.14);
+    border: 1px solid rgba(14, 173, 154, 0.35);
   }
 
   .appDownloadText {

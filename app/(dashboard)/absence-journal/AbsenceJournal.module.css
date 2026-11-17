@@ -605,24 +605,38 @@
 
 .adminDayChips {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  flex-wrap: wrap;
   overflow-x: auto;
   padding-bottom: 0.25rem;
   scrollbar-width: thin;
 }
 
 .adminDayChip {
-  display: flex;
-  width: 42px;
-  height: 52px;
-  flex: 0 0 42px;
+  display: inline-flex;
+  width: 26px;
+  height: 32px;
+  flex: 0 0 26px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  border-radius: 0.65rem;
-  font-size: 0.8125rem;
+  gap: 1px;
+  border-radius: 6px;
+  font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
+}
+
+.adminDayChip span:first-child {
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.adminDayChip span:last-child {
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .adminDayPresent {
@@ -861,7 +875,7 @@
 
 /* Today highlight ring */
 .calCellToday {
-  box-shadow: 0 0 0 2px var(--text-accent), 0 0 12px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 0 2px var(--text-accent), 0 0 10px rgba(14, 173, 154, 0.18);
 }
 
 .calCellToday .calCellDay {
@@ -989,9 +1003,9 @@
   }
 
   .adminDayChip {
-    width: 38px;
-    height: 46px;
-    flex-basis: 38px;
+    width: 24px;
+    height: 30px;
+    flex-basis: 24px;
   }
 
   .calendarStats {

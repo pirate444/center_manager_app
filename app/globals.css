@@ -1,6 +1,6 @@
 /* ============================================================
    Education Center Platform — Global Design System
-   Dark Theme | Glassmorphism | RTL-First | Arabic Primary
+   Midnight Navy | Solid Surfaces | RTL-First | Arabic Primary
    ============================================================ */
 
 /* ---- Google Fonts ---- */
@@ -8,34 +8,37 @@
 
 /* ---- CSS Custom Properties ---- */
 :root {
-  /* Colors — Dark Theme */
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1e293b;
-  --bg-card: rgba(255, 255, 255, 0.05);
-  --bg-card-hover: rgba(255, 255, 255, 0.08);
-  --bg-card-solid: #1a2236;
-  --bg-input: rgba(255, 255, 255, 0.06);
-  --bg-input-focus: rgba(255, 255, 255, 0.1);
-  --bg-sidebar: #0d1220;
-  --bg-overlay: rgba(0, 0, 0, 0.6);
+  /* Colors — Midnight + warm teal */
+  --bg-primary: #0b1220;
+  --bg-secondary: #111b2e;
+  --bg-tertiary: #111b2e;
+  --bg-card: #172338;
+  --bg-card-hover: #1c2b42;
+  --bg-card-solid: #172338;
+  --bg-input: #131f32;
+  --bg-input-focus: #192941;
+  --bg-sidebar: #0e1728;
+  --bg-overlay: rgba(3, 8, 17, 0.72);
 
   /* Accent Colors */
-  --accent-teal: #06b6d4;
-  --accent-indigo: #6366f1;
-  --accent-purple: #8b5cf6;
-  --accent-gradient: linear-gradient(135deg, #06b6d4, #6366f1);
-  --accent-gradient-hover: linear-gradient(135deg, #0891b2, #4f46e5);
-  --accent-gradient-soft: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(99, 102, 241, 0.15));
-  --accent-glow: 0 0 20px rgba(6, 182, 212, 0.3), 0 0 40px rgba(99, 102, 241, 0.15);
+  --accent-teal: #0ead9a;
+  --accent-indigo: #818cf8;
+  --accent-purple: #a78bfa;
+  --accent-gradient: linear-gradient(135deg, #0ead9a, #0b9687);
+  --accent-gradient-hover: linear-gradient(135deg, #0b9687, #087e73);
+  --accent-gradient-soft: linear-gradient(135deg, rgba(14, 173, 154, 0.14), rgba(129, 140, 248, 0.12));
+  --accent-glow: 0 0 22px rgba(14, 173, 154, 0.12);
+  --primary: #0ead9a;
+  --primary-light: #49d7c1;
+  --secondary: #818cf8;
 
   /* Text Colors */
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-tertiary: #64748b;
-  --text-inverse: #0a0e1a;
-  --text-accent: #06b6d4;
-  --text-link: #38bdf8;
+  --text-primary: #e7edf5;
+  --text-secondary: #9aa9bc;
+  --text-tertiary: #718198;
+  --text-inverse: #071a1d;
+  --text-accent: #49d7c1;
+  --text-link: #8ddfd2;
 
   /* Status Colors */
   --color-success: #10b981;
@@ -57,15 +60,15 @@
   --subject-french: #3b82f6;
   --subject-english: #8b5cf6;
   --subject-science: #ef4444;
-  --subject-physics: #06b6d4;
+  --subject-physics: #0ead9a;
   --subject-history: #f97316;
-  --subject-default: #6366f1;
+  --subject-default: #818cf8;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.15);
-  --border-accent: rgba(6, 182, 212, 0.4);
+  --border-subtle: rgba(154, 169, 188, 0.1);
+  --border-default: rgba(154, 169, 188, 0.16);
+  --border-strong: rgba(154, 169, 188, 0.24);
+  --border-accent: rgba(14, 173, 154, 0.4);
   --border-radius-sm: 6px;
   --border-radius-md: 10px;
   --border-radius-lg: 14px;
@@ -77,8 +80,8 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 16px 50px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 15px rgba(6, 182, 212, 0.2);
-  --shadow-glow-strong: 0 0 30px rgba(6, 182, 212, 0.3), 0 0 60px rgba(99, 102, 241, 0.15);
+  --shadow-glow: 0 0 18px rgba(14, 173, 154, 0.12);
+  --shadow-glow-strong: 0 0 24px rgba(14, 173, 154, 0.18), 0 0 40px rgba(129, 140, 248, 0.08);
 
   /* Spacing Scale (4px base) */
   --space-1: 4px;
@@ -215,8 +218,6 @@ img {
 /* ---- Glass Card ---- */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-lg);
   transition: all var(--transition-normal);
@@ -230,8 +231,6 @@ img {
 
 .glass-card-static {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius-lg);
 }
@@ -339,7 +338,7 @@ img {
 .form-input:focus {
   background: var(--bg-input-focus);
   border-color: var(--accent-teal);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 0 0 3px rgba(14, 173, 154, 0.18);
 }
 
 .form-input::placeholder {
@@ -399,7 +398,7 @@ img {
 
 .btn-primary {
   background: var(--accent-gradient);
-  color: white;
+  color: var(--text-inverse);
   box-shadow: var(--shadow-sm);
 }
 
@@ -522,8 +521,8 @@ img {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+  0%, 100% { box-shadow: 0 0 5px rgba(14, 173, 154, 0.12); }
+  50% { box-shadow: 0 0 16px rgba(14, 173, 154, 0.24); }
 }
 
 @keyframes spin {
@@ -661,7 +660,7 @@ img {
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(14, 173, 154, 0.045) 0%, transparent 70%);
   top: -100px;
   left: -100px;
 }
@@ -672,7 +671,7 @@ img {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.035) 0%, transparent 70%);
   bottom: -200px;
   right: -200px;
 }
@@ -691,10 +690,16 @@ img {
   .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
   .hide-mobile { display: none !important; }
-  
+
   .main-content-expanded,
   .main-content-collapsed {
-    margin-inline-start: 56px !important;
+    width: 100% !important;
+    min-width: 0;
+    margin-inline-start: 0 !important;
+  }
+
+  .main-content main {
+    padding: 1rem !important;
   }
 }
 

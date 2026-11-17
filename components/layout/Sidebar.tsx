@@ -19,7 +19,7 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
   const pathname = usePathname();
   const { t } = useTranslation();
   
-  const { userRole, isSuperAdmin } = useAuth();
+  const { userRole } = useAuth();
   const { notifications } = useNotifications();
 
   const routes = [
@@ -53,7 +53,13 @@ export default function Sidebar({ collapsed, onToggle, isMobileOpen, onMobileClo
       <aside className={sidebarClass}>
         <div className={styles.header}>
           <Link href="/" className={styles.logo} onClick={() => isMobileOpen && onMobileClose()}>
-            <div className={styles.logoIcon}>E</div>
+            <div className={styles.logoIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+                <path d="M8 7h8M8 11h7" />
+              </svg>
+            </div>
             {!collapsed && <span>{t('app.title') || 'EduCenter'}</span>}
           </Link>
           <button className={`${styles.toggleBtn} ${styles.desktopOnly}`} onClick={onToggle} title="Toggle Sidebar">
