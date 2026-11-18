@@ -189,7 +189,7 @@ const translations: Record<string, Record<Language, string>> = {
   no_available_time_gaps: { fr: 'Aucun créneau libre pendant les heures d’ouverture.', en: 'No open time remains during working hours.' },
   class_weekly_schedule: { fr: 'Planning hebdomadaire de la classe', en: 'Class weekly schedule' },
   no_scheduled_sessions: { fr: 'Aucune séance planifiée pour cette classe.', en: 'No sessions scheduled for this class.' },
-  room_conflict: { fr: 'Cette salle est déjà réservée pendant ce créneau.', en: 'This classroom is already booked during this time.' },
+  room_conflict: { fr: 'Cette classe ou cette salle est déjà programmée pendant ce créneau.', en: 'This class or classroom is already booked during this time.' },
   schedule_conflict: { fr: 'Cette classe a déjà une séance qui chevauche cet horaire.', en: 'This class already has a session that overlaps this time.' },
   capacity: { fr: 'Capacité', en: 'Capacity' },
   max_capacity: { fr: 'Capacité maximale', en: 'Max Capacity' },
