@@ -237,6 +237,46 @@ export async function notifyNewResource(params: {
 }
 
 /**
+ * Triggered when a new payment / billing record is created or updated
+ */
+export async function notifyBillingRecord(payment: {
+  _id?: any;
+  studentId: string;
+  amount: number;
+  currency?: string;
+  month?: string;
+  status: string;
+  description?: string;
+}) {
+  try {
+    const isPaid = payment.status === 'paid';
+    const title = isPaid ? '💳 Paiement Confirmé' : '📄 Nouveau Relevé de Facturation';
+    const amountStr = `${payment.amount} ${payment.currency || 'DT'}`;
+    const monthStr = payment.month ? ` (${payment.month})` : '';
+    const body = isPaid
+      ? `Votre paiement de ${amountStr}${monthStr} a été enregistré avec succès.`
+      : `Un avis de paiement de ${amountStr}${monthStr} est disponible.`;
+
+    await notifyUsers(
+      {
+        studentIds: [payment.studentId],
+      },
+      {
+        title,
+        body,
+        data: {
+          type: 'billing',
+          url: '/billing',
+          paymentId: payment._id?.toString(),
+        },
+      }
+    );
+  } catch (err) {
+    console.error('Failed to notify for billing record:', err);
+  }
+}
+
+/**
  * Triggered when class schedule or room is updated
  */
 export async function notifyScheduleUpdate(params: {
