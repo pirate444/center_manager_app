@@ -24,8 +24,11 @@ export async function sendExpoPushNotifications(messages: ExpoPushMessage[]): Pr
   );
 
   if (validMessages.length === 0) {
+    console.log('[push] No valid push tokens to send to. Messages had', messages.length, 'entries.');
     return [];
   }
+
+  console.log(`[push] Sending ${validMessages.length} push notification(s)...`);
 
   const results: any[] = [];
   const chunkSize = 100;
@@ -45,9 +48,10 @@ export async function sendExpoPushNotifications(messages: ExpoPushMessage[]): Pr
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Expo push notification error:', errorText);
+        console.error('[push] Expo push API error:', response.status, errorText);
       } else {
         const data = await response.json();
+        console.log('[push] Expo push API response:', JSON.stringify(data));
         results.push(data);
       }
     } catch (err) {
@@ -121,6 +125,7 @@ export async function notifyUsers(
 ) {
   try {
     const tokens = await getPushTokens(params);
+    console.log(`[push] Found ${tokens.length} push token(s) for params:`, JSON.stringify(params));
     if (tokens.length === 0) return;
 
     const messages: ExpoPushMessage[] = tokens.map((token) => ({
