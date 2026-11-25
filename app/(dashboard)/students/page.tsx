@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
-import { studentsStorage, classesStorage, paymentsStorage, attendanceStorage } from '@/lib/storage';
-import { Student, ClassItem, Payment, AttendanceRecord } from '@/lib/types';
+import { studentsStorage, classesStorage, paymentsStorage, attendanceStorage, usersStorage, getWeeklyLoginCode } from '@/lib/storage';
+import { Student, ClassItem, Payment, AttendanceRecord, User } from '@/lib/types';
 import { DataTable, ColumnDef } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -30,8 +30,13 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [createAccount, setCreateAccount] = useState(true);
+  const [createdAccountInfo, setCreatedAccountInfo] = useState<{ studentName: string; loginCode: string } | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [creatingAccountForId, setCreatingAccountForId] = useState<string | null>(null);
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [formData, setFormData] = useState({ ...emptyForm });
@@ -40,6 +45,7 @@ export default function StudentsPage() {
     setStudents(await studentsStorage.getAll());
     setClasses(await classesStorage.getAll());
     setPayments(await paymentsStorage.getAll());
+    setUsers(await usersStorage.getAll());
   }, []);
 
   useEffect(() => {
@@ -51,6 +57,7 @@ export default function StudentsPage() {
 
   const openAdd = () => {
     setEditingId(null);
+    setCreateAccount(true);
     setFormData({ ...emptyForm });
     setIsModalOpen(true);
   };
@@ -138,12 +145,62 @@ export default function StudentsPage() {
     if (editingId) {
       await studentsStorage.update(editingId, payload);
     } else {
-      await studentsStorage.create(payload);
+      const newStudent = await studentsStorage.create(payload);
+      if (createAccount && newStudent) {
+        try {
+          const studentUser = await usersStorage.create({
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            role: 'student',
+            studentId: newStudent.id,
+            isActive: true,
+          } as any);
+
+          const loginCode = getWeeklyLoginCode(studentUser.id);
+          await usersStorage.update(studentUser.id, { loginCode } as any);
+          await studentsStorage.update(newStudent.id, { userId: studentUser.id } as any);
+
+          setCreatedAccountInfo({
+            studentName: `${newStudent.firstName} ${newStudent.lastName}`,
+            loginCode,
+          });
+        } catch (accountErr) {
+          console.error('Failed to create user account for student:', accountErr);
+        }
+      }
     }
     setIsModalOpen(false);
     loadData();
     setFormData({ ...emptyForm });
     setEditingId(null);
+  };
+
+  const handleCreateAccountForStudent = async (student: Student) => {
+    setCreatingAccountForId(student.id);
+    try {
+      const studentUser = await usersStorage.create({
+        firstName: student.firstName,
+        lastName: student.lastName,
+        role: 'student',
+        studentId: student.id,
+        isActive: true,
+      } as any);
+
+      const loginCode = getWeeklyLoginCode(studentUser.id);
+      await usersStorage.update(studentUser.id, { loginCode } as any);
+      await studentsStorage.update(student.id, { userId: studentUser.id } as any);
+
+      setProfileStudent({ ...student, userId: studentUser.id });
+      setCreatedAccountInfo({
+        studentName: `${student.firstName} ${student.lastName}`,
+        loginCode,
+      });
+      loadData();
+    } catch (err: any) {
+      console.error('Failed to create account:', err);
+    } finally {
+      setCreatingAccountForId(null);
+    }
   };
 
   const getStudentClasses = (student: Student) => {
@@ -196,6 +253,29 @@ export default function StudentsPage() {
           <Input label={t('parent_email')} type="email" value={formData.parentEmail} onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })} />
           <Input label={t('address')} value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
           <Select label={t('status')} value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} options={[{ value: 'active', label: t('active') }, { value: 'inactive', label: t('inactive') }, { value: 'graduated', label: t('graduated') }]} required />
+          {!editingId && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              background: 'rgba(6, 182, 212, 0.08)',
+              border: '1px solid rgba(6, 182, 212, 0.25)',
+              borderRadius: '10px',
+              marginTop: '0.25rem',
+            }}>
+              <input
+                type="checkbox"
+                id="createAccountCheckbox"
+                checked={createAccount}
+                onChange={(e) => setCreateAccount(e.target.checked)}
+                style={{ width: '18px', height: '18px', accentColor: 'var(--accent-teal)', cursor: 'pointer' }}
+              />
+              <label htmlFor="createAccountCheckbox" style={{ fontSize: '0.875rem', cursor: 'pointer', color: 'var(--text-primary)', userSelect: 'none' }}>
+                <strong>{t('create_access_account') || "Créer également un compte d'accès (Mobile & Web)"}</strong>
+              </label>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
             <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>{t('cancel')}</Button>
             <Button type="submit">{t('save')}</Button>
@@ -273,8 +353,144 @@ export default function StudentsPage() {
                 );
               })()}
             </div>
+
+            {/* Account Access Section */}
+            <div>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--accent-teal)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {t('access_account') || "Compte d'accès"}
+              </h4>
+              {(() => {
+                const userAcc = users.find(u => u.studentId === profileStudent.id || u.id === profileStudent.userId);
+                if (userAcc) {
+                  return (
+                    <div style={{
+                      padding: '1rem',
+                      background: 'rgba(6, 182, 212, 0.06)',
+                      border: '1px solid rgba(6, 182, 212, 0.2)',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          {t('student_login_code') || "Code de connexion étudiant"}
+                        </span>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-teal)', fontFamily: 'monospace', letterSpacing: '0.1em', marginTop: '0.125rem' }}>
+                          {userAcc.loginCode || getWeeklyLoginCode(userAcc.id)}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          navigator.clipboard.writeText(userAcc.loginCode || getWeeklyLoginCode(userAcc.id));
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                      >
+                        {copiedCode ? '✓ Copié !' : 'Copier'}
+                      </Button>
+                    </div>
+                  );
+                }
+                return (
+                  <div style={{
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px dashed rgba(255, 255, 255, 0.15)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '1rem',
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                        {t('no_access_account') || "Aucun compte d'accès actif pour cet étudiant"}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                        Créez un compte pour permettre à l'étudiant de se connecter à l'application.
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={creatingAccountForId === profileStudent.id}
+                      onClick={() => handleCreateAccountForStudent(profileStudent)}
+                    >
+                      {creatingAccountForId === profileStudent.id ? 'Création...' : (t('create_account_for_student') || "Créer un compte d'accès")}
+                    </Button>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
+      </Modal>
+
+      {/* Generated Account Code Modal */}
+      <Modal isOpen={!!createdAccountInfo} onClose={() => setCreatedAccountInfo(null)} title={t('account_created_success') || "Compte créé avec succès !"}>
+        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+          <div style={{
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            background: 'rgba(16, 185, 129, 0.15)',
+            color: '#10b981',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1rem',
+            fontSize: '24px'
+          }}>
+            ✓
+          </div>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+            Le compte de connexion pour <strong>{createdAccountInfo?.studentName}</strong> est prêt.
+          </p>
+          <div style={{
+            padding: '1.25rem',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1.5px dashed var(--accent-teal)',
+            borderRadius: '12px',
+            marginBottom: '1rem',
+          }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {t('student_login_code') || "Code de connexion étudiant"}
+            </span>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              letterSpacing: '0.15em',
+              color: 'var(--accent-teal)',
+              marginTop: '0.25rem',
+              fontFamily: 'monospace',
+            }}>
+              {createdAccountInfo?.loginCode}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (createdAccountInfo?.loginCode) {
+                  navigator.clipboard.writeText(createdAccountInfo.loginCode);
+                  setCopiedCode(true);
+                  setTimeout(() => setCopiedCode(false), 2000);
+                }
+              }}
+            >
+              {copiedCode ? '✓ Copié !' : 'Copier le code'}
+            </Button>
+          </div>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-tertiary)', marginBottom: '1.5rem' }}>
+            {t('give_code_to_student') || "Transmettez ce code à l'étudiant pour se connecter sur mobile et web."}
+          </p>
+          <Button onClick={() => setCreatedAccountInfo(null)} style={{ width: '100%' }}>
+            {t('close') || "Fermer"}
+          </Button>
+        </div>
       </Modal>
     </div>
   );

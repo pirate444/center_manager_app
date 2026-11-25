@@ -1,4 +1,4 @@
-import { User, Student, Teacher, ClassItem, AttendanceRecord, Payment, Message, CenterSettings, RegistrationRequest, OtpCode } from './types';
+import { User, Student, Teacher, ClassItem, AttendanceRecord, Payment, Message, CenterSettings, RegistrationRequest, OtpCode, Quiz, QuizSubmission } from './types';
 
 export function generateId(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -135,6 +135,8 @@ export const paymentsStorage = new StorageService<Payment>('/api/payments');
 export const messagesStorage = new StorageService<Message>('/api/messages');
 export const registrationRequestsStorage = new StorageService<RegistrationRequest>('/api/registration-requests');
 export const otpStorage = new StorageService<OtpCode>('/api/otp');
+export const quizzesStorage = new StorageService<Quiz>('/api/quizzes');
+export const quizSubmissionsStorage = new StorageService<QuizSubmission>('/api/quiz-submissions');
 
 export const settingsStorage = {
   async get(): Promise<CenterSettings | null> {

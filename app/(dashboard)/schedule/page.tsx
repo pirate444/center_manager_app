@@ -221,7 +221,6 @@ export default function SchedulePage() {
           <h1 className="page-title">{t('weekly_schedule')}</h1>
           {isManagerOrAdmin && <p className={styles.pageSubtitle}>{t('daily_room_schedule') || 'Choose a day to see every classroom and its availability.'}</p>}
         </div>
-
       </header>
 
       {isManagerOrAdmin ? (

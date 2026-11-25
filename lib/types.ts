@@ -202,3 +202,46 @@ export interface OtpCode {
   createdAt: string;
   updatedAt: string;
 }
+
+// Quizzes
+export interface QuizQuestion {
+  id: string;
+  text: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation?: string;
+  points?: number;
+}
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  classId: string;
+  teacherId?: string;
+  timeLimitMinutes?: number;
+  questions: QuizQuestion[];
+  status: 'draft' | 'published' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizAnswer {
+  questionIndex: number;
+  selectedOptionIndex: number;
+  isCorrect?: boolean;
+}
+
+export interface QuizSubmission {
+  id: string;
+  quizId: string;
+  studentId: string;
+  studentName?: string;
+  answers: QuizAnswer[];
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  submittedAt: string;
+  createdAt?: string;
+}
+

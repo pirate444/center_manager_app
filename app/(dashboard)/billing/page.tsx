@@ -23,7 +23,7 @@ const MONTH_KEYS = [
 
 export default function BillingPage() {
   const { t } = useTranslation();
-  const { user, isStudent, isManagerOrAdmin } = useAuth();
+  const { user, isStudent, isTeacher, isManagerOrAdmin } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -77,10 +77,29 @@ export default function BillingPage() {
       allStudents = allStudents.filter(s => s.id === user.studentId);
     }
     
+    let allClasses = await classesStorage.getAll();
+    let allAttendance = await attendanceStorage.getAll();
+
+    // Teacher: filter to only assigned classes and their students
+    if (isTeacher && user?.teacherId) {
+      try {
+        const tRes = await fetch(`/api/teachers/${user.teacherId}`);
+        if (tRes.ok) {
+          const teacher = await tRes.json();
+          const assignedIds = new Set((teacher.assignedClassIds || []).map(String));
+          allClasses = allClasses.filter(c => c.teacherId === user.teacherId || assignedIds.has(c.id));
+          const classIdSet = new Set(allClasses.map(c => c.id));
+          allStudents = allStudents.filter(s => s.enrolledClassIds.some((id: string) => classIdSet.has(id)));
+          allPayments = allPayments.filter(p => !!p.classId && classIdSet.has(p.classId));
+          allAttendance = allAttendance.filter(r => classIdSet.has(r.classId));
+        }
+      } catch { /* fallback to all data */ }
+    }
+
     setPayments(allPayments);
     setStudents(allStudents);
-    setClasses(await classesStorage.getAll());
-    setAttendanceRecords(await attendanceStorage.getAll());
+    setClasses(allClasses);
+    setAttendanceRecords(allAttendance);
   };
 
   useEffect(() => {

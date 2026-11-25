@@ -64,7 +64,17 @@ export default function AbsenceJournalPage() {
       if (isStudent && user?.studentId) {
         loadedClasses = loadedClasses.filter(c => c.enrolledStudentIds.includes(user.studentId!));
       } else if (isTeacher && user?.teacherId) {
-        loadedClasses = loadedClasses.filter(c => c.teacherId === user.teacherId);
+        let assignedIds = new Set<string>();
+        try {
+          const tRes = await fetch(`/api/teachers/${user.teacherId}`);
+          if (tRes.ok) {
+            const teacher = await tRes.json();
+            assignedIds = new Set((teacher.assignedClassIds || []).map(String));
+          }
+        } catch {}
+        loadedClasses = loadedClasses.filter(
+          c => c.teacherId === user.teacherId || assignedIds.has(String(c.id))
+        );
       }
       setClasses(loadedClasses);
       setStudents(await studentsStorage.getAll());
@@ -205,7 +215,7 @@ export default function AbsenceJournalPage() {
 
       {/* Controls */}
       <div className={styles.controls}>
-        {isManagerOrAdmin ? (
+        {(isManagerOrAdmin || isTeacher) ? (
           <div className={styles.adminClassChips} role="group" aria-label={t('classes')}>
             {classes.map((classItem) => {
               const isSelected = classItem.id === selectedClassId;
@@ -276,8 +286,8 @@ export default function AbsenceJournalPage() {
         </div>
       )}
 
-      {/* Admin monthly student cards */}
-      {isManagerOrAdmin && activeClass && enrolledStudents.length > 0 && (
+      {/* Admin and Teacher monthly student cards */}
+      {(isManagerOrAdmin || isTeacher) && activeClass && enrolledStudents.length > 0 && (
         <section className={styles.adminStudentSection}>
           <h2 className={styles.adminSectionTitle}>
             {language === 'fr' ? 'Élèves inscrits' : 'Enrolled Students'}
@@ -356,7 +366,7 @@ export default function AbsenceJournalPage() {
             <p>{t('no_students')}</p>
           </div>
         </Card>
-      ) : isManagerOrAdmin ? null : isStudent ? (
+      ) : (isManagerOrAdmin || isTeacher) ? null : isStudent ? (
         /* ===== STUDENT CALENDAR VIEW ===== */
         <>
           {enrolledStudents.map((student) => {

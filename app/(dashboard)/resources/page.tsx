@@ -126,20 +126,26 @@ export default function ResourcesPage() {
         const res = await fetch('/api/classes');
         if (!res.ok) throw new Error();
         const data: ClassItem[] = await res.json();
-        // Filter: active only. For teachers, only their assigned classes.
+        // Filter: active only. For teachers, strictly only their assigned classes.
         let filtered = data.filter((c) => c.status === 'active');
-        if (isTeacher && user?.teacherId) {
-          // Fetch teacher record to get assignedClassIds
-          try {
-            const tRes = await fetch(`/api/teachers/${user.teacherId}`);
-            if (tRes.ok) {
-              const teacher = await tRes.json();
-              const assignedIds = new Set(teacher.assignedClassIds || []);
-              filtered = filtered.filter((c) => assignedIds.has(c.id));
+        if (isTeacher) {
+          let assignedIds = new Set<string>();
+          if (user?.teacherId) {
+            try {
+              const tRes = await fetch(`/api/teachers/${user.teacherId}`);
+              if (tRes.ok) {
+                const teacher = await tRes.json();
+                assignedIds = new Set((teacher.assignedClassIds || []).map(String));
+              }
+            } catch {
+              // ignore
             }
-          } catch {
-            // fallback: show all
           }
+          filtered = filtered.filter(
+            (c) =>
+              (user?.teacherId && c.teacherId === user.teacherId) ||
+              assignedIds.has(String(c.id))
+          );
         }
         if (isStudent && user?.studentId) {
           try {

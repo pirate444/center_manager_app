@@ -91,38 +91,64 @@ export default function RegistrationRequestsPage() {
       return;
     }
 
-    // Create Student record
-    const student = await studentsStorage.create({
-      firstName: request.firstName,
-      lastName: request.lastName,
-      dateOfBirth: request.dateOfBirth,
-      gender: request.gender,
-      grade: request.grade,
-      enrolledClassIds: [],
-      parentName: request.parentName,
-      parentPhone: request.parentPhone,
-      parentEmail: request.parentEmail,
-      address: request.address,
-      status: 'active',
-    } as any);
+    // Check if an existing student matches by parentPhone or by first & last name
+    const allStudents = await studentsStorage.getAll();
+    const existingStudent = allStudents.find((s) => {
+      const matchPhone = s.parentPhone && request.parentPhone && s.parentPhone.trim() === request.parentPhone.trim();
+      const matchName =
+        s.firstName?.trim().toLowerCase() === request.firstName?.trim().toLowerCase() &&
+        s.lastName?.trim().toLowerCase() === request.lastName?.trim().toLowerCase();
+      return matchPhone || matchName;
+    });
 
-    // Create User record for the student
-    const studentUser = await usersStorage.create({
-      firstName: request.firstName,
-      lastName: request.lastName,
-      role: 'student',
-      studentId: student.id,
-      isActive: true,
-    } as any);
-    
-    // Generate the weekly login code based on the new user's ID
-    const loginCode = getWeeklyLoginCode(studentUser.id);
-    
-    // Save it to user for backward compatibility or immediate display
-    await usersStorage.update(studentUser.id, { loginCode } as any);
+    let student = existingStudent;
+    if (!student) {
+      student = await studentsStorage.create({
+        firstName: request.firstName,
+        lastName: request.lastName,
+        dateOfBirth: request.dateOfBirth,
+        gender: request.gender,
+        grade: request.grade,
+        enrolledClassIds: [],
+        parentName: request.parentName,
+        parentPhone: request.parentPhone,
+        parentEmail: request.parentEmail,
+        address: request.address,
+        status: 'active',
+      } as any);
+    } else {
+      if (student.status !== 'active') {
+        await studentsStorage.update(student.id, { status: 'active' } as any);
+      }
+    }
 
-    // Link student to user
-    await studentsStorage.update(student.id, { userId: studentUser.id } as any);
+    // Check if a User record already exists for this student
+    const allUsers = await usersStorage.getAll();
+    let studentUser = allUsers.find((u) => u.studentId === student.id || (student.userId && u.id === student.userId));
+
+    let loginCode = '';
+    if (!studentUser) {
+      studentUser = await usersStorage.create({
+        firstName: request.firstName,
+        lastName: request.lastName,
+        role: 'student',
+        studentId: student.id,
+        isActive: true,
+      } as any);
+      loginCode = getWeeklyLoginCode(studentUser.id);
+      await usersStorage.update(studentUser.id, { loginCode } as any);
+      await studentsStorage.update(student.id, { userId: studentUser.id } as any);
+    } else {
+      loginCode = studentUser.loginCode || getWeeklyLoginCode(studentUser.id);
+      if (!studentUser.loginCode) {
+        await usersStorage.update(studentUser.id, { loginCode, isActive: true } as any);
+      } else if (!studentUser.isActive) {
+        await usersStorage.update(studentUser.id, { isActive: true } as any);
+      }
+      if (!student.userId) {
+        await studentsStorage.update(student.id, { userId: studentUser.id } as any);
+      }
+    }
 
     // Update registration request
     await registrationRequestsStorage.update(request.id, {
@@ -351,7 +377,7 @@ export default function RegistrationRequestsPage() {
                   {t('no_pending_requests') || 'No pending student requests'}
                 </div>
               ) : (
-                pendingRequests.filter(r => r.role === 'student').map(req => renderRequestCard(req, true))
+                pendingRequests.filter(r => r.role === 'student').map(req => <React.Fragment key={req.id}>{renderRequestCard(req, true)}</React.Fragment>)
               )}
             </div>
           </Tab>
@@ -365,7 +391,7 @@ export default function RegistrationRequestsPage() {
                   {t('no_pending_requests') || 'No pending teacher requests'}
                 </div>
               ) : (
-                pendingRequests.filter(r => r.role === 'teacher').map(req => renderRequestCard(req, true))
+                pendingRequests.filter(r => r.role === 'teacher').map(req => <React.Fragment key={req.id}>{renderRequestCard(req, true)}</React.Fragment>)
               )}
             </div>
           </Tab>
@@ -420,7 +446,7 @@ export default function RegistrationRequestsPage() {
                   {t('no_approved_requests') || 'No approved requests yet'}
                 </div>
               ) : (
-                approvedRequests.map(req => renderRequestCard(req, false))
+                approvedRequests.map(req => <React.Fragment key={req.id}>{renderRequestCard(req, false)}</React.Fragment>)
               )}
             </div>
           </Tab>
@@ -431,7 +457,7 @@ export default function RegistrationRequestsPage() {
                   {t('no_rejected_requests') || 'No rejected requests'}
                 </div>
               ) : (
-                rejectedRequests.map(req => renderRequestCard(req, false))
+                rejectedRequests.map(req => <React.Fragment key={req.id}>{renderRequestCard(req, false)}</React.Fragment>)
               )}
             </div>
           </Tab>
